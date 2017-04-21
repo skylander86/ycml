@@ -68,7 +68,7 @@ def main():
     featurizer_parameters['n_jobs'] = get_settings(key='n_jobs', sources=(A, 'env', featurizer_parameters, file_settings), default=1)
 
     if A.instances:
-        X, Y_labels = list(zip(*load_instances(A.instances, limit=20)))
+        X, Y_labels = list(zip(*load_instances(A.instances)))
 
     if A.fit:
         if not featurizer_type: parser.error('featurizer_type needs to be specified for fitting.'.format(featurizer_type))
