@@ -1,0 +1,6 @@
+boto3
+tabulate
+
+numpy
+scipy
+scikit-learn

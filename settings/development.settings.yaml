@@ -1,0 +1,9 @@
+log_level: DEBUG
+
+n_jobs: 1
+
+featurizer_type: HelloWorld
+featurizer_parameters:
+
+classifier_type: HelloWorld
+classifier_parameters:
