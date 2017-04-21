@@ -64,7 +64,7 @@ optional arguments:
 
 Example:
 
-    python -m project.featurize ExampleFeaturizer -i ./data/train.json.gz --fit models/development.featurizer.gz -o data/development.features.npz
+    python -m project.featurize ExampleFeaturizer --settings settings/development.settings.yaml -i ./data/train.json.gz --fit models/development.featurizer.gz -o data/development.features.npz
 
 You can set parameters for the featurizer through the settings file directly (or use the default).
 We store existing settings file in [`settings/`](settings/) using the naming convention of `<environment>.settings.yaml`, where settings for multiple apps are stored in a single YAML file.
@@ -80,10 +80,10 @@ The [`project.classify`](project/classify.py) script will perform the necessary 
 ```
 (venv) $ python -m project.classify -h
 usage: classify.py [-h] [--log-level <log_level>] [-s <settings_file>]
-                   [-c <classifier_file>]
+                   [-c <classifier_file>] [--n-jobs <N>]
                    <mode> ...
 
-Classify instances for AOLs and Issues classifier.
+Classify instances using ML classifier.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -93,11 +93,22 @@ optional arguments:
                         Settings file to configure models.
   -c <classifier_file>, --classifier-info <classifier_file>
                         Display information about classifier.
+  --n-jobs <N>          No. of processor cores to use.
 
 Different classifier modes for fitting, evaluating, and prediction.:
   <mode>
-    fit                 Fit an AOLs and Issues classifier.
-    evaluate            Evaluate an AOLs and Issues classifier.
-    predict             Predict using an AOLs and Issues classifier.
+    fit                 Fit a classifier.
+    evaluate            Evaluate a classifier.
+    predict             Predict using a classifier.
+    info                Display information regarding classifier.
 ```
 
+Example:
+
+```
+python -m project.classify --settings settings/development.settings.yaml fit ExampleClassifier -f data/development.features.npz -o models/development.classifier.gz
+
+python -m project.classify --settings settings/development.settings.yaml evaluate models/development.classifier.gz data/development.features.npz --save-probabilities data/development.evaluation_probabilities.npz
+
+python -m project.classify --settings settings/development.settings.yaml predict models/development.classifier.gz data/development.features.npz -p
+```

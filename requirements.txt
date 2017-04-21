@@ -1,6 +1,7 @@
-boto3
-tabulate
-
 numpy
 scipy
 scikit-learn
+
+boto3
+tabulate
+yaml

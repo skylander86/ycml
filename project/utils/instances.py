@@ -6,33 +6,44 @@ import logging
 from tabulate import tabulate
 
 from .uriutils import URIFileType
+from .timer import Timer
 
 __all__ = ['load_instances']
 
 logger = logging.getLogger(__name__)
 
 
-def load_instances(instance_files, labels_field=None, limit=None):
-    count = 0
+def load_instances(instance_files, labels_field='labels', limit=None):
+    total_count = 0
+    labels_freq = Counter()
     for f in instance_files:
+        freq = Counter()
+        count = 0
+        timer = Timer()
         for lineno, line in enumerate(f, start=1):
             o = json.loads(line)
 
-            labels = None
-
-            if labels_field is not None:
-                labels = o[labels_field]
+            labels = o.get(labels_field)
+            if labels is not None:
                 del o[labels_field]
+                if labels: freq.update(labels)
+                else: freq['<none>'] += 1
             #end if
 
             yield (o, labels)
             count += 1
             if count == limit: break
         #end for
-        logger.info('{} lines read from instance file <{}>.'.format(lineno, f.name))
+        logger.info('{} instances read from file <{}> {}.'.format(count, f.name, timer))
+
+        labels_freq += freq
+        total_count += count
+        logger.info('Label frequencies for <{}>:\n{}'.format(f.name, tabulate(freq.most_common() + [('Labels total', sum(freq.values())), ('Cases total', count)], headers=('Label', 'Freq'), tablefmt='psql')))
 
         if count == limit: break
     #end for
+
+    logger.info('Total label frequencies:\n{}'.format(tabulate(labels_freq.most_common() + [('Labels total', sum(labels_freq.values())), ('Cases total', count)], headers=('Label', 'Freq'), tablefmt='psql')))
 #end def
 
 

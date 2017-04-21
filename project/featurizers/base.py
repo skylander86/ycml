@@ -1,7 +1,7 @@
+from collections import Counter
 from datetime import datetime
 import logging
 import pickle as pickle
-import time
 from uuid import uuid4
 
 import numpy as np
@@ -10,6 +10,10 @@ from scipy.sparse import csr_matrix, issparse
 
 from sklearn.exceptions import NotFittedError
 from sklearn.pipeline import Pipeline
+
+from tabulate import tabulate
+
+from ..utils import Timer
 
 __all__ = ['BaseFeaturizer', 'load_featurized', 'save_featurized', 'load_featurizer']
 
@@ -26,9 +30,9 @@ class BaseFeaturizer(Pipeline):
         self.uuid_ = str(uuid4())
         logger.debug('{} UUID is {}.'.format(type(self).__name__, self.uuid_))
 
-        start_time = time.time()
+        timer = Timer()
         super(BaseFeaturizer, self).fit(X)
-        logger.info('Done fitting {} (took {:.3f} seconds).'.format(type(self).__name__, time.time() - start_time))
+        logger.info('Done fitting {} {}.'.format(type(self).__name__, timer))
 
         self._post_fit()
 
@@ -39,9 +43,9 @@ class BaseFeaturizer(Pipeline):
         self.uuid_ = str(uuid4())
         logger.debug('{} UUID is {}.'.format(type(self).__name__, self.uuid_))
 
-        start_time = time.time()
+        timer = Timer()
         X_featurized = super(BaseFeaturizer, self).fit_transform(X)
-        logger.info('Done fitting {} (took {:.3f} seconds).'.format(type(self).__name__, time.time() - start_time))
+        logger.info('Done fitting {} {}.'.format(type(self).__name__, timer))
 
         self._post_fit()
 
@@ -92,13 +96,14 @@ def save_featurized(f, X_featurized, Y_labels=None, **kwargs):
 
 
 def load_featurized(f, keys=[], raise_on_missing=True):
+    timer = Timer()
     o = np.load(f)
 
     if not keys or 'X_featurized' in keys:
         if 'X_featurized_data' in o: X_featurized = csr_matrix((o['X_featurized_data'], o['X_featurized_indices'], o['X_featurized_indptr']), shape=o['X_featurized_shape'])
         else: X_featurized = o['X_featurized']
 
-        logger.info('Loaded {} featurized instances from <{}>.'.format(X_featurized.shape[0], f.name))
+        logger.info('Loaded {} featurized instances from <{}> {}.'.format(X_featurized.shape[0], f.name, timer))
     #end if
 
     if keys and raise_on_missing:
@@ -107,8 +112,23 @@ def load_featurized(f, keys=[], raise_on_missing=True):
                 raise ValueError('{} not found in <{}>.'.format(k, f.name))
     #end if
 
-    if keys: return [X_featurized if k == 'X_featurized' else o[k] for k in keys]
+    Y_labels = None
+    if keys:
+        d = tuple([X_featurized if k == 'X_featurized' else o[k] for k in keys])
+        if 'Y_labels' in keys: Y_labels = d[keys.index('Y_labels')]
+    else:
+        d = dict((k, o[k]) for k in o.keys() if k not in {'X_featurized_data', 'X_featurized_indices', 'X_featurized_shape', 'X_featurized_indptr'})
+        Y_labels = d.get('Y_labels')
+    #end if
 
-    d = dict((k, o[k]) for k in o.keys() if k not in {'X_featurized_data', 'X_featurized_indices', 'X_featurized_shape', 'X_featurized_indptr'})
+    if Y_labels is not None:
+        freq = Counter(label for labels in Y_labels for label in labels)
+        freq['<none>'] = sum(1 for labels in Y_labels if not labels)
+        if freq['<none>'] == 0: del freq['<none>']
+
+        logger.info('Label frequencies for <{}>:\n{}'.format(f.name, tabulate(freq.most_common() + [('Labels total', sum(freq.values())), ('Cases total', len(Y_labels))], headers=('Label', 'Freq'), tablefmt='psql')))
+    #end for
+
+    if isinstance(d, tuple): return d
     return X_featurized, d
 #end def

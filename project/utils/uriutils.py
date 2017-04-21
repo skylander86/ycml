@@ -34,7 +34,7 @@ def uri_open(uri, mode='r', encoding='utf-8', use_gzip='auto', io_args={}, urifs
     if read_mode:
         if o.scheme == 's3':
             r = s3_client.get_object(Bucket=o.netloc, Key=o.path.lstrip('/'), **urifs_args)
-            fileobj = BytesIO(r['Body'].read())
+            fileobj = BytesIO(r['Body'].read())  # future: Add support for local temp file
 
         elif o.scheme in ['http', 'https']:
             r = requests.get(uri)

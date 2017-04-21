@@ -4,6 +4,7 @@ n_jobs: 1
 
 featurizer_type: HelloWorld
 featurizer_parameters:
+  feature_dims: 5
 
 classifier_type: HelloWorld
 classifier_parameters:
