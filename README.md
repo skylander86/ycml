@@ -103,12 +103,81 @@ Different classifier modes for fitting, evaluating, and prediction.:
     info                Display information regarding classifier.
 ```
 
+#### Fitting a classifier
+
+The `fit` sub-command will fit a classifier model to training data.
+
+```
+(venv) $ python -m project.classify fit -h
+usage: classify.py fit [-h] [-f <featurized>] -o <classifier_file>
+                       <classifier_type>
+
+positional arguments:
+  <classifier_type>     Type of classifier model to fit.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -f <featurized>, --featurized <featurized>
+                        Fit model on featurized instances.
+  -o <classifier_file>, --output <classifier_file>
+                        Save trained classifier model here.
+```
+
 Example:
 
-```
-python -m project.classify --settings settings/development.settings.yaml fit ExampleClassifier -f data/development.features.npz -o models/development.classifier.gz
+    python -m project.classify --settings settings/development.settings.yaml fit ExampleClassifier -f data/development.features.npz -o models/development.classifier.gz
 
-python -m project.classify --settings settings/development.settings.yaml evaluate models/development.classifier.gz data/development.features.npz --save-probabilities data/development.evaluation_probabilities.npz
+#### Evaluating a classifier
 
-python -m project.classify --settings settings/development.settings.yaml predict models/development.classifier.gz data/development.features.npz -p
+The `evaluate` sub-command will evaluate instances using a trained model.
+
 ```
+(venv) $ python -m project.classify evaluate -h
+usage: classify.py evaluate [-h] [-t <thresholds>] [-p <probabilities_file>]
+                            <classifier_file> <featurized_file>
+
+positional arguments:
+  <classifier_file>     Model file to use for evaluation.
+  <featurized_file>     Evaluate model on featurized instances.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -t <thresholds>, --thresholds <thresholds>
+                        Threshold file to use for prediction.
+  -p <probabilities_file>, --save-probabilities <probabilities_file>
+                        Save evaluation probabilities; useful for calibration.
+```
+
+Example:
+
+    python -m project.classify --settings settings/development.settings.yaml evaluate models/development.classifier.gz data/development.features.npz --save-probabilities data/development.evaluation_probabilities.npz
+
+#### Making predictions
+
+The `predict` sub-command will make predictions using a trained model.
+
+```
+(venv) $ python -m project.classify predict -h
+usage: classify.py predict [-h] [-t <thresholds>] [-o <prediction_file>]
+                           [-f <format>] [-p]
+                           <classifier_file> <featurized_file>
+
+positional arguments:
+  <classifier_file>     Model file to use for prediction.
+  <featurized_file>     Predict labels of featurized instances.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -t <thresholds>, --thresholds <thresholds>
+                        Threshold file to use for prediction.
+  -o <prediction_file>, --output <prediction_file>
+                        Save results of prediction here.
+  -f <format>, --format <format>
+                        Save results of prediction using this format (defaults
+                        to file extension).
+  -p, --probs           Also save prediction probabilities.
+```
+
+Example:
+
+    python -m project.classify --settings settings/development.settings.yaml predict models/development.classifier.gz data/development.features.npz -p

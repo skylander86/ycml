@@ -108,10 +108,6 @@ def main():
         assert Y_predict_binarized.shape[0] == N
         assert Y_true_binarized.shape[0] == N
 
-        # logger.info(
-        #     'Evaluation results for <{}>:\n'.format(A.featurized_file.name) +
-        #     evaluation_table(classifier.classes_, Y_true_binarized, Y_proba, thresholds)
-        # )
         logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_predict_binarized, target_names=['not spam', 'spam'])))
 
         if A.save_probabilities:
@@ -193,7 +189,6 @@ def main():
             ('UUID', classifier.uuid_),
             ('Fitted at', classifier.fitted_at_),
             ('Output labels', ', '.join(classifier.classes_)),
-            ('Input x Output dims', '{} x {}'.format(classifier.input_dims_, classifier.output_dims_)),
         ]
         tabulate_rows += [('Model Parameters', '{} = {}'.format(k, v)) for k, v in sorted(params.items())]
         tabulate_rows += [('Fitted Parameters', '{} = {}'.format(k, getattr(classifier, k))) for k in sorted(dir(classifier)) if re.match(r'.+[a-z]_$', k, flags=re.I) and k not in ['fitted_at_', 'uuid_', 'classes_', 'input_dims_', 'output_dims_']]
