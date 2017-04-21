@@ -17,8 +17,9 @@ logger = logging.getLogger(__name__)
 
 
 class BaseFeaturizer(Pipeline):
-    def __init__(self, **kwargs):
+    def __init__(self, n_jobs=1, **kwargs):
         super(BaseFeaturizer, self).__init__(**kwargs)
+        self.n_jobs = n_jobs
     #end def
 
     def fit(self, X):
@@ -80,9 +81,12 @@ def load_featurizer(f):
 
 
 def save_featurized(f, X_featurized, Y_labels=None, **kwargs):
-    assert issparse(X_featurized)
+    if issparse(X_featurized):
+        np.savez_compressed(f, X_featurized_data=X_featurized.data, X_featurized_indices=X_featurized.indices, X_featurized_indptr=X_featurized.indptr, X_featurized_shape=X_featurized.shape, Y_labels=Y_labels, featurized_at=datetime.utcnow(), **kwargs)  # Always use compression
+    else:
+        np.savez_compressed(f, X_featurized=X_featurized, Y_labels=Y_labels, featurized_at=datetime.utcnow(), **kwargs)  # Always use compression
+    #end if
 
-    np.savez_compressed(f, X_featurized_data=X_featurized.data, X_featurized_indices=X_featurized.indices, X_featurized_indptr=X_featurized.indptr, X_featurized_shape=X_featurized.shape, Y_labels=Y_labels, featurized_at=datetime.utcnow(), **kwargs)  # Always use compression
     logger.info('Saved {} featurized instances and its metadata to <{}>.'.format(X_featurized.shape[0], f.name))
 #end def
 
@@ -91,7 +95,9 @@ def load_featurized(f, keys=[], raise_on_missing=True):
     o = np.load(f)
 
     if not keys or 'X_featurized' in keys:
-        X_featurized = csr_matrix((o['X_featurized_data'], o['X_featurized_indices'], o['X_featurized_indptr']), shape=o['X_featurized_shape'])
+        if 'X_featurized_data' in o: X_featurized = csr_matrix((o['X_featurized_data'], o['X_featurized_indices'], o['X_featurized_indptr']), shape=o['X_featurized_shape'])
+        else: X_featurized = o['X_featurized']
+
         logger.info('Loaded {} featurized instances from <{}>.'.format(X_featurized.shape[0], f.name))
     #end if
 
@@ -101,7 +107,7 @@ def load_featurized(f, keys=[], raise_on_missing=True):
                 raise ValueError('{} not found in <{}>.'.format(k, f.name))
     #end if
 
-    if keys: return [X_featurized if k == 'X_featurized' else o.get(k) for k in keys]
+    if keys: return [X_featurized if k == 'X_featurized' else o[k] for k in keys]
 
     d = dict((k, o[k]) for k in o.keys() if k not in {'X_featurized_data', 'X_featurized_indices', 'X_featurized_shape', 'X_featurized_indptr'})
     return X_featurized, d
