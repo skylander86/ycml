@@ -49,7 +49,7 @@ def main():
     subparsers = parser.add_subparsers(title='Different classifier modes for fitting, evaluating, and prediction.', metavar='<mode>', dest='mode')
 
     fit_parser = subparsers.add_parser('fit', help='Fit a classifier.')
-    fit_parser.add_argument('classifier_type', type=str, metavar='<classifier_type>', help='Type of classifier model to fit.')
+    fit_parser.add_argument('classifier_type', type=str, metavar='<classifier_type>', nargs='?', help='Type of classifier model to fit.')
     fit_parser.add_argument('-f', '--featurized', type=URIFileType('rb'), metavar='<featurized>', help='Fit model on featurized instances.')
     fit_parser.add_argument('-o', '--output', type=URIFileType('wb'), metavar='<classifier_file>', required=True, help='Save trained classifier model here.')
 

@@ -163,7 +163,7 @@ class BinaryClassifier(LabelsClassifier):
         binarized = kwargs.pop('binarized', True)
         Y_proba, Y_predict = super(BinaryClassifier, self).predict_and_proba(*args, binarized=binarized, **kwargs)
         if binarized:
-            Y_predict = Y_predict[:, 0]
+            Y_predict = Y_predict[:, 1]
 
         return Y_proba, Y_predict
     #end def
@@ -171,7 +171,7 @@ class BinaryClassifier(LabelsClassifier):
     def binarize_labels(self, Y_labels):
         not_pos_label = 'not {}'.format(self.pos_label_)
         Y_labels_pos = [self.pos_label_ if self.pos_label_ in Y_labels[i] else not_pos_label for i in range(Y_labels.shape[0])]
-        return label_binarize(Y_labels_pos, classes=[self.pos_label_, not_pos_label])
+        return label_binarize(Y_labels_pos, classes=[not_pos_label, self.pos_label_])
     #end def
 
     def unbinarize_labels(self, Y_binarized, epsilon=0.0):

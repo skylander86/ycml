@@ -4,10 +4,10 @@ Template for a new Python ML project.
 
 ## Dev environment setup
 
-Python is the main language used in this codebase.
+Python 3 is the main language used in this codebase.
 We strongly encourage the use of Python [virtual environments](http://docs.python-guide.org/en/latest/dev/virtualenvs/):
 
-    virtualenv venv
+    virtualenv venv -p /usr/bin/python3
     source venv/bin/activate
 
 After which, you can install the required Python modules via

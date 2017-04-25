@@ -4,4 +4,4 @@ scikit-learn
 
 boto3
 tabulate
-yaml
+pyyaml
