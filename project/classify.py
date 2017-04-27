@@ -88,7 +88,7 @@ def main():
 
         X_featurized, Y_labels = load_featurized(A.featurized, keys=('X_featurized', 'Y_labels'))
 
-        classifier = classifier_class(**classifier_parameters).fit(X_featurized, Y_labels, pos_labels='spam')
+        classifier = classifier_class(**classifier_parameters).fit(X_featurized, Y_labels, pos_label='spam')
 
         classifier.save(A.output)
 
@@ -144,7 +144,6 @@ def main():
                     for c, p in proba.items():
                         o['p({})'.format(c)] = str(p)
                 #end if
-                print(o)
 
                 writer.writerow(o)
             #end def

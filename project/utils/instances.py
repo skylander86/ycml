@@ -3,12 +3,14 @@ from collections import Counter
 import json
 import logging
 
+import numpy as np
+
 from tabulate import tabulate
 
 from .uriutils import URIFileType
 from .timer import Timer
 
-__all__ = ['load_instances']
+__all__ = ['load_instances', 'shuffle_instances']
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +47,15 @@ def load_instances(instance_files, labels_field='labels', limit=None):
 
     if len(instance_files) > 1:
         logger.info('Total label frequencies:\n{}'.format(tabulate(labels_freq.most_common() + [('Labels total', sum(labels_freq.values())), ('Cases total', count)], headers=('Label', 'Freq'), tablefmt='psql')))
+#end def
+
+
+def shuffle_instances(X, Y, limit=None):
+    indices = np.arange(X.shape[0])
+    np.random.shuffle(indices)
+    if limit: indices = indices[:limit]
+
+    return X[indices], Y[indices]
 #end def
 
 

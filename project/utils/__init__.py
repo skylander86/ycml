@@ -1,3 +1,4 @@
+from .cpus import *
 from .instances import *
 from .settings import *
 from .timer import *
