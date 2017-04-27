@@ -10,13 +10,12 @@ import numpy as np
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.exceptions import NotFittedError
-from sklearn.preprocessing import label_binarize
 
 from ..utils import load_dictionary_from_file
 from ..utils import Timer
 from ..utils import parse_n_jobs
 
-__all__ = ['BaseClassifier', 'BinaryClassifier', 'load_classifier', 'get_thresholds_from_file']
+__all__ = ['BaseClassifier', 'load_classifier', 'get_thresholds_from_file']
 
 logger = logging.getLogger(__name__)
 
@@ -78,8 +77,8 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
         return Y_predict
     #end def
 
-    def predict_and_proba(self, X_featurized, thresholds=0.5, denominators=None, rescale=False, **kwargs):
-        Y_proba = self.predict_proba(X_featurized, thresholds=thresholds, denominators=denominators, rescale=rescale, **kwargs)
+    def predict_and_proba(self, X_featurized, thresholds=0.5, rescale=False, **kwargs):
+        Y_proba = self.predict_proba(X_featurized, thresholds=thresholds, rescale=rescale, **kwargs)
 
         if rescale: Y_predict = Y_proba >= 0.5
         else:
@@ -132,82 +131,6 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
     def __str__(self):
         return '{}(UUID={})'.format(self.name, self.uuid_ if hasattr(self, 'uuid_') else 'None')
 #end class
-
-
-class LabelsClassifier(BaseClassifier):
-    def _fit(self, X, Y_labels, binarize_args={}, fit_args={}):
-        Y_binarized = self.binarize_labels(Y_labels, **binarize_args)
-        return self.fit_binarized(X, Y_binarized, **fit_args)
-    #end def
-
-    def fit_binarized(self, X_featurized, Y_binarized, **kwargs): raise NotImplementedError('fit_binarized is not implemented.')
-
-    def predict(self, X_featurized, binarized=True, **kwargs):
-        Y_predict_binarized = super(LabelsClassifier, self).predict(X_featurized, **kwargs)
-        if binarized: return Y_predict_binarized
-
-        return self.unbinarize_labels(Y_predict_binarized)
-    #end def
-
-    def predict_and_proba(self, X_featurized, binarized=True, **kwargs):
-        Y_proba, Y_predict_binarized = super(LabelsClassifier, self).predict_and_proba(X_featurized, **kwargs)
-        if binarized: return Y_proba, Y_predict_binarized
-
-        return Y_proba, self.unbinarize_labels(Y_predict_binarized)
-    #end def
-
-    def binarize_labels(self, Y_labels, **kwargs): raise NotImplementedError('binarize_labels is not implemented.')
-
-    def unbinarize_labels(self, Y_binarized, epsilon=0.0): raise NotImplementedError('unbinarize_labels is not implemented.')
-
-    @property
-    def classes_(self): raise NotImplementedError('classes_ is not implemented.')
-#end def
-
-
-class BinaryClassifier(LabelsClassifier):
-    def __init__(self, pos_label=None, **kwargs):
-        super(BinaryClassifier, self).__init__(**kwargs)
-        self.pos_label = pos_label
-    #end def
-
-    def predict(self, X_featurized, binarized=True, **kwargs):
-        Y_predict_binarized = super(BinaryClassifier, self).predict(X_featurized, **kwargs)
-        if binarized: return Y_predict_binarized
-
-        return self.unbinarize_labels(Y_predict_binarized)
-    #end def
-
-    def predict_and_proba(self, *args, **kwargs):
-        binarized = kwargs.pop('binarized', True)
-        Y_proba, Y_predict = super(BinaryClassifier, self).predict_and_proba(*args, binarized=binarized, **kwargs)
-        if binarized:
-            Y_predict = Y_predict[:, 1]
-
-        return Y_proba, Y_predict
-    #end def
-
-    def binarize_labels(self, Y_labels, pos_label=None):
-        if pos_label is None:
-            pos_label = self.pos_label
-
-        not_pos_label = 'not {}'.format(pos_label)
-        Y_labels_pos = [pos_label if pos_label in Y_labels[i] else not_pos_label for i in range(Y_labels.shape[0])]
-        Y_binarized = label_binarize(Y_labels_pos, classes=[pos_label, not_pos_label]).reshape(Y_labels.shape[0])
-
-        return Y_binarized
-    #end def
-
-    def unbinarize_labels(self, Y_binarized, pos_label=None, epsilon=0.0):
-        if pos_label is None:
-            pos_label = self.pos_label
-
-        return np.array([[pos_label] if Y_binarized[i] > 0 else [] for i in range(Y_binarized.shape[0])], dtype=np.object)
-    #end def
-
-    @property
-    def classes_(self): return [self.pos_label_]
-#end def
 
 
 def load_classifier(f):
