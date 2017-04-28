@@ -9,6 +9,10 @@ featurizer_parameters:
 # classifier_parameters:
 #   pos_label: apple
 
-classifier_type: HelloWorldMultiLabelsClassifier
+# classifier_type: HelloWorldMultiLabelsClassifier
+# classifier_parameters:
+#   include: [apple, cherry]
+
+classifier_type: HelloWorldMulticlassClassifier
 classifier_parameters:
-  include: [apple, cherry]
+  # include: [apple, cherry]
