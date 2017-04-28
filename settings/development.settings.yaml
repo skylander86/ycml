@@ -1,33 +1,12 @@
 log_level: DEBUG
 
-n_jobs: 0.5 * n
+n_jobs: 1
 
-featurizer_type: URLCharFeaturizer
+featurizer_type: HelloWorldFeaturizer
 featurizer_parameters:
 
-classifier_type: URLLSTMClassifier
+classifier_type: HelloWorldBinaryLabelsClassifier
 classifier_parameters:
-  embedding_dims: 32
-  lstm_units: 16
-  recurrent_dropout: 0.1
 
-  epochs: 25
-  batch_size: 128
-  validation_size: 0.2
-
-  verbose: 1
-  log_device_placement: false
-
-  early_stopping:
-    monitor: val_keras_f1_score
-    patience: 3
-    min_delta: 0.001
-    min_epoch: 5
-
-  save_best:
-    path: weights/best_{val_keras_f1_score:.5f}.h5
-    monitor: val_keras_f1_score
-
-  save_weights:
-    period: 5
-    path: weights/{epoch:04d}_{val_keras_f1_score:.5f}.h5
+# classifier_type: HelloWorldMultiLabelsClassifier
+# classifier_parameters:
