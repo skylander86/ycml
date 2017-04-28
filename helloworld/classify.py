@@ -70,7 +70,7 @@ def main():
 
         X_featurized, Y_labels = load_featurized(A.featurized, keys=('X_featurized', 'Y_labels'))
 
-        classifier = classifier_class(pos_label='apple', **classifier_parameters).fit(X_featurized, Y_labels)
+        classifier = classifier_class(**classifier_parameters).fit(X_featurized, Y_labels)
 
         classifier.save(A.output)
 
@@ -90,7 +90,10 @@ def main():
         assert Y_predict_binarized.shape[0] == N
         assert Y_true_binarized.shape[0] == N
 
-        logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_predict_binarized, target_names=['not apple', 'apple'])))
+        if len(classifier.classes_) == 1:
+            logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_predict_binarized, target_names=('not ' + classifier.classes_[0], classifier.classes_[0]))))
+        else:
+            logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_predict_binarized, target_names=classifier.classes_)))
 
         if A.save_probabilities:
             np.savez_compressed(A.save_probabilities, featurizer_uuid=featurizer_uuid, classifier_uuid=classifier.uuid_, Y_proba=Y_proba, Y_true_binarized=Y_true_binarized, thresholds=thresholds, labels=classifier.classes_)

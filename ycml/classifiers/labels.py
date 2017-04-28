@@ -94,18 +94,19 @@ class BinaryLabelsClassifier(LabelsClassifier):
 
 
 class MultiLabelsClassifier(LabelsClassifier):
-    def __init__(self, n_jobs=1, ignore_labels=[], **kwargs):
+    def __init__(self, n_jobs=1, include=[], exclude=[], **kwargs):
         super(MultiLabelsClassifier, self).__init__(**kwargs)
 
-        self.ignore_labels = set(ignore_labels)
+        self.exclude = set(exclude)
+        self.include = set(include)
     #end def
 
     def _fit(self, X, Y_labels, binarize_args={}, fit_args={}, **kwargs):
-        if self.ignore_labels:
+        if self.exclude or self.include:
             Y_labels_filtered = np.empty(Y_labels.shape, dtype=np.object)
             removed_labels = 0
             for i in range(Y_labels.shape[0]):
-                Y_labels_filtered[i] = [l for l in Y_labels[i] if l not in self.ignore_labels]
+                Y_labels_filtered[i] = [l for l in Y_labels[i] if l in self.include and l not in self.exclude]
                 removed_labels += len(Y_labels[i]) - len(Y_labels_filtered[i])
             #end for
             logger.info('{} label-instances removed from the training data.'.format(removed_labels))
@@ -113,6 +114,8 @@ class MultiLabelsClassifier(LabelsClassifier):
 
         self.label_binarizer_ = MultiLabelBinarizer(sparse_output=False).fit(Y_labels_filtered)
         logger.info('{} labels found in training instances.'.format(len(self.classes_)))
+
+        if not len(self.classes_): raise ValueError('There are no labels available for fitting model.')
 
         return super(MultiLabelsClassifier, self)._fit(X, Y_labels, binarize_args, fit_args)
     #end def
