@@ -206,7 +206,7 @@ class MultiLabelsClassifier(LabelsClassifier):
             Y_labels_filtered = np.empty(Y_labels.shape, dtype=np.object)
             removed_labels = 0
             for i in range(Y_labels.shape[0]):
-                Y_labels_filtered[i] = [l for l in Y_labels[i] if l in self.include and l not in self.exclude]
+                Y_labels_filtered[i] = [l for l in Y_labels[i] if (l in self.include or not self.include) and l not in self.exclude]
                 removed_labels += len(Y_labels[i]) - len(Y_labels_filtered[i])
             #end for
             logger.info('{} label-instances removed from the training data.'.format(removed_labels))

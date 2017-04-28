@@ -5,6 +5,7 @@ import pickle as pickle
 from uuid import uuid4
 
 import numpy as np
+from numpy.lib.npyio import NpzFile
 
 from scipy.sparse import csr_matrix, issparse
 
@@ -79,6 +80,8 @@ class BaseFeaturizer(Pipeline):
 def load_featurizer(f):
     featurizer = pickle.load(f)
     logger.info('Loaded {} from <{}>.'.format(featurizer, f.name))
+    if not isinstance(featurizer, BaseFeaturizer):
+        logger.warning('{} is not an instance of BaseFeaturizer. Perhaps you are loading the wrong file?'.format(featurizer))
 
     return featurizer
 #end def
@@ -98,6 +101,9 @@ def save_featurized(f, X_featurized, Y_labels=None, **kwargs):
 def load_featurized(f, keys=[], raise_on_missing=True):
     timer = Timer()
     o = np.load(f)
+    # print(type(o))  # numpy.lib.npyio.NpzFile
+    if not isinstance(o, NpzFile):
+        logger.warning('<{}> is not an instance of NpzFile. Perhaps you are loading the wrong file?'.format(f.name))
 
     if not keys or 'X_featurized' in keys:
         if 'X_featurized_data' in o: X_featurized = csr_matrix((o['X_featurized_data'], o['X_featurized_indices'], o['X_featurized_indptr']), shape=o['X_featurized_shape'])
@@ -108,7 +114,7 @@ def load_featurized(f, keys=[], raise_on_missing=True):
 
     if keys and raise_on_missing:
         for k in keys:
-            if k not in o:
+            if k not in o and k not in ['X_featurized']:
                 raise ValueError('{} not found in <{}>.'.format(k, f.name))
     #end if
 
