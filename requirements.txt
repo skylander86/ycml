@@ -2,6 +2,5 @@ numpy
 scipy
 scikit-learn
 
-boto3
 tabulate
 pyyaml

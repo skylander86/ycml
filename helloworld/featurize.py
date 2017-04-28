@@ -8,36 +8,14 @@ from scipy.sparse import issparse
 
 from tabulate import tabulate
 
-from .featurizers import load_featurizer, load_featurized, save_featurized, BaseFeaturizer
-from .transformers import PureTransformer
-from .utils import load_instances, URIFileType, load_dictionary_from_file, get_settings
+from ycml.featurizers import load_featurizer, load_featurized, save_featurized
+from ycml.utils import load_instances, URIFileType, load_dictionary_from_file, get_settings
+
+from .featurizers import FEATURIZERS_MAP
 
 __all__ = []
 
 logger = logging.getLogger(__name__)
-
-
-class RandomFeatures(PureTransformer):
-    def __init__(self, feature_dims=10, **kwargs):
-        self.feature_dims = feature_dims
-
-    def transform(self, X):
-        return np.random.rand(len(X), self.feature_dims)
-#end class
-
-
-class ExampleFeaturizer(BaseFeaturizer):
-    def __init__(self, feature_dims=10, **kwargs):
-        super(ExampleFeaturizer, self).__init__(steps=[('random_features', RandomFeatures(feature_dims=feature_dims))], **kwargs)
-
-        self.feature_dims = feature_dims
-    #end def
-#end class
-
-
-FEATURIZERS_MAP = {
-    'ExampleFeaturizer': ExampleFeaturizer
-}
 
 
 def main():

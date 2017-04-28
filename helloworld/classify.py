@@ -8,35 +8,17 @@ import sys
 
 import numpy as np
 
-from sklearn.svm import SVC
 from sklearn.metrics import classification_report
 
 from tabulate import tabulate
 
-from .classifiers import BinaryClassifier, load_classifier, get_thresholds_from_file
-from .featurizers import load_featurized, save_featurized
-from .utils import load_dictionary_from_file, get_settings, uri_open, URIFileType
+from ycml.classifiers import load_classifier, get_thresholds_from_file
+from ycml.featurizers import load_featurized, save_featurized
+from ycml.utils import load_dictionary_from_file, get_settings, uri_open, URIFileType
 
-__all__ = []
+from .classifiers import CLASSIFERS_MAP
 
 logger = logging.getLogger(__name__)
-
-
-class ExampleClassifier(BinaryClassifier):
-    def fit_binarized(self, X_featurized, Y_binarized, **kwargs):
-        self.classifier_ = SVC(probability=True).fit(X_featurized, Y_binarized)
-
-        return self
-    #end def
-
-    def _predict_proba(self, X_featurized, **kwargs):
-        return self.classifier_.predict_proba(X_featurized, **kwargs)
-#end class
-
-
-CLASSIFERS_MAP = {
-    'ExampleClassifier': ExampleClassifier,
-}
 
 
 def main():
