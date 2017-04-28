@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class LabelsClassifier(BaseClassifier):
-    def _fit(self, X, Y_labels, binarize_args={}, fit_args={}):
+    def _fit(self, X, Y_labels, binarize_args={}, fit_args={}, **kwargs):
         Y_binarized = self.binarize_labels(Y_labels, **binarize_args)
         return self.fit_binarized(X, Y_binarized, **fit_args)
     #end def
@@ -55,8 +55,9 @@ class BinaryLabelsClassifier(LabelsClassifier):
     def predict_and_proba(self, *args, **kwargs):
         Y_proba, Y_predict = super(BinaryLabelsClassifier, self).predict_and_proba(*args, **kwargs)
         binarized = kwargs.get('binarized', True)
+
         if binarized:
-            Y_predict = Y_predict[:, 1]
+            Y_predict = Y_predict[:, 0]  # must be 0th one coz classes_ only has 1 thing
 
         return Y_proba, Y_predict
     #end def
@@ -87,7 +88,8 @@ class BinaryLabelsClassifier(LabelsClassifier):
     #end def
 
     @property
-    def classes_(self): return [self.pos_label_]
+    def classes_(self):
+        return [self.pos_label]
 #end def
 
 
@@ -98,7 +100,7 @@ class MultiLabelsClassifier(LabelsClassifier):
         self.ignore_labels = set(ignore_labels)
     #end def
 
-    def _fit(self, X, Y_labels, binarize_args={}, fit_args={}):
+    def _fit(self, X, Y_labels, binarize_args={}, fit_args={}, **kwargs):
         if self.ignore_labels:
             Y_labels_filtered = np.empty(Y_labels.shape, dtype=np.object)
             removed_labels = 0

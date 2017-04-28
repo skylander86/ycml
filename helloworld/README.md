@@ -64,7 +64,8 @@ optional arguments:
 
 Example:
 
-    python -m helloworld.featurize --settings settings/development.settings.yaml -i ./data/train.json.gz --fit models/development.featurizer.gz -o data/development.features.npz
+    python -m helloworld.featurize --settings settings/development.settings.yaml -i ./data/train.json.gz --fit models/development.featurizer.gz -o data/train.features.npz
+    python -m helloworld.featurize --settings settings/development.settings.yaml -i ./data/evaluate.json.gz --featurize models/development.featurizer.gz -o data/evaluate.features.npz
 
 You can set parameters for the featurizer through the settings file directly (or use the default).
 We store existing settings file in [`settings/`](settings/) using the naming convention of `<environment>.settings.yaml`, where settings for multiple apps are stored in a single YAML file.
@@ -125,7 +126,7 @@ optional arguments:
 
 Example:
 
-    python -m helloworld.classify --settings settings/development.settings.yaml fit -f data/development.features.npz -o models/development.classifier.gz
+    python -m helloworld.classify --settings settings/development.settings.yaml fit -f data/train.features.npz -o models/development.classifier.gz
 
 #### Evaluating a classifier
 
@@ -150,7 +151,7 @@ optional arguments:
 
 Example:
 
-    python -m helloworld.classify --settings settings/development.settings.yaml evaluate models/development.classifier.gz data/development.features.npz --save-probabilities data/development.evaluation_probabilities.npz
+    python -m helloworld.classify --settings settings/development.settings.yaml evaluate models/development.classifier.gz data/evaluate.features.npz --save-probabilities data/evaluate.evaluation_probabilities.npz
 
 #### Making predictions
 
@@ -180,4 +181,4 @@ optional arguments:
 
 Example:
 
-    python -m helloworld.classify --settings settings/development.settings.yaml predict models/development.classifier.gz data/development.features.npz -p
+    python -m helloworld.classify --settings settings/development.settings.yaml predict models/development.classifier.gz data/evaluate.features.npz -p

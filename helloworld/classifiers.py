@@ -1,11 +1,11 @@
 from sklearn.svm import SVC
 
-from ycml.classifiers import BinaryClassifier
+from ycml.classifiers import BinaryLabelsClassifier
 
-__all__ = ['HelloWorldClassifier', 'CLASSIFERS_MAP']
+__all__ = ['HelloWorldBinaryLabelsClassifier', 'CLASSIFERS_MAP']
 
 
-class HelloWorldClassifier(BinaryClassifier):
+class HelloWorldBinaryLabelsClassifier(BinaryLabelsClassifier):
     def fit_binarized(self, X_featurized, Y_binarized, **kwargs):
         self.classifier_ = SVC(probability=True).fit(X_featurized, Y_binarized)
 
@@ -18,5 +18,5 @@ class HelloWorldClassifier(BinaryClassifier):
 
 
 CLASSIFERS_MAP = {
-    'HelloWorldClassifier': HelloWorldClassifier,
+    'HelloWorldBinaryLabelsClassifier': HelloWorldBinaryLabelsClassifier,
 }

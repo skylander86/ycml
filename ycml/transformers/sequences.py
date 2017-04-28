@@ -1,5 +1,5 @@
 from .base import PureTransformer
-from .misc import ListCountVectorizer
+from .text import ListCountVectorizer
 
 __all__ = ['TokensToIndexTransformer']
 

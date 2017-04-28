@@ -4,13 +4,17 @@ import shutil
 from tempfile import NamedTemporaryFile
 import time
 
-from keras import backend as K
-from keras.callbacks import Callback, ModelCheckpoint
-from keras.models import load_model
+try:
+    from keras import backend as K
+    from keras.callbacks import Callback, ModelCheckpoint
+    from keras.models import load_model
+
+    import tensorflow as tf
+except ImportError:
+    Callback = object
 
 import numpy as np
 
-import tensorflow as tf
 
 __all__ = ['KerasNNClassifierMixin', 'keras_f1_score', 'EarlyStopping']
 

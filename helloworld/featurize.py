@@ -106,7 +106,7 @@ def main():
         logger.debug('Feature matrix has dimensions {}x{} ({:,} active features).'.format(X_featurized.shape[0], X_featurized.shape[1], len(X_featurized.data)))
 
         if A.output:
-            X_meta = np.array([dict(id=o['_id']) for i, o in enumerate(X)], dtype=np.object)
+            X_meta = np.array([dict(id=o['id']) for i, o in enumerate(X)], dtype=np.object)
             save_featurized(A.output, X_featurized=X_featurized, Y_labels=Y_labels, X_meta=X_meta, featurizer_uuid=featurizer.uuid_)
         #end if
     #end if

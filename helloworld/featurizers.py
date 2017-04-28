@@ -1,6 +1,6 @@
 import numpy as np
 
-from ycml.featurizer import BaseFeaturizer
+from ycml.featurizers import BaseFeaturizer
 from ycml.transformers import PureTransformer
 
 __all__ = ['HelloWorldFeaturizer', 'FEATURIZERS_MAP']
