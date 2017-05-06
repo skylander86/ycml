@@ -22,9 +22,9 @@ class PureTransformer(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None, **fit_params): return self
 
-    def transform(self, X, y=None):
+    def transform(self, X, **kwargs):
         timer = Timer()
-        transformed = self._transform(X, y)
+        transformed = self._transform(X, **kwargs)
         if self.nparray: transformed = np.array(transformed)
         logger.debug('Done <{}> transformation{}.'.format(type(self).__name__, timer))
 
