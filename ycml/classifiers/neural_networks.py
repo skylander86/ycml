@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
 
 
 class KerasNNClassifierMixin(object):
+    PICKLE_IGNORED_ATTRIBUTES = set()
+
     def __init__(self, tf_config=None, validation_size=0.1, epochs=10, batch_size=128, log_device_placement=False, verbose=0, early_stopping=None, save_best=None, save_weights=None, **kwargs):
         self.tf_config = tf_config
         self.batch_size = batch_size
@@ -99,7 +101,8 @@ class KerasNNClassifierMixin(object):
     #end def
 
     def __getstate__(self):
-        return dict((k, v) for k, v in self.__dict__.items() if k not in ['nn_model_', 'tf_session'])
+        ignored_attrs = set(['nn_model_', 'tf_session']) | self.PICKLE_IGNORED_ATTRIBUTES
+        return dict((k, v) for k, v in self.__dict__.items() if k not in ignored_attrs)
     #end def
 
     @property
