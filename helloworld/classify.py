@@ -72,7 +72,7 @@ def main():
 
         classifier = classifier_class(**classifier_parameters).fit(X_featurized, Y_labels)
 
-        classifier.save(A.output)
+        if A.output: classifier.save(A.output)
 
     elif A.mode == 'evaluate':
         classifier = load_classifier(A.classifier_file)
