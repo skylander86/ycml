@@ -25,27 +25,34 @@ def load_instances(instance_files, labels_field='labels', limit=None):
         for lineno, line in enumerate(f, start=1):
             o = json.loads(line)
 
-            labels = o.get(labels_field)
-            if labels is not None:
-                del o[labels_field]
-                if labels: freq.update(labels)
-                else: freq['<none>'] += 1
+            if labels_field is None:
+                yield o
+            else:
+                labels = o.get(labels_field)
+                if labels is not None:
+                    del o[labels_field]
+                    if labels: freq.update(labels)
+                    else: freq['<none>'] += 1
+                #end if
+
+                yield (o, labels)
             #end if
 
-            yield (o, labels)
             count += 1
             if count == limit: break
         #end for
         logger.info('{} instances read from file <{}> {}.'.format(count, f.name, timer))
 
-        labels_freq += freq
         total_count += count
-        logger.info('Label frequencies for <{}>:\n{}'.format(f.name, tabulate(freq.most_common() + [('Labels total', sum(freq.values())), ('Cases total', count)], headers=('Label', 'Freq'), tablefmt='psql')))
+        if labels_field:
+            labels_freq += freq
+            logger.info('Label frequencies for <{}>:\n{}'.format(f.name, tabulate(freq.most_common() + [('Labels total', sum(freq.values())), ('Cases total', count)], headers=('Label', 'Freq'), tablefmt='psql')))
+        #end if
 
         if count == limit: break
     #end for
 
-    if len(instance_files) > 1:
+    if labels_field and len(instance_files) > 1:
         logger.info('Total label frequencies:\n{}'.format(tabulate(labels_freq.most_common() + [('Labels total', sum(labels_freq.values())), ('Cases total', count)], headers=('Label', 'Freq'), tablefmt='psql')))
 #end def
 
