@@ -39,21 +39,21 @@ def load_instances(instance_files, labels_field='labels', limit=None):
             #end if
 
             count += 1
-            if count == limit: break
+            total_count += 1
+            if total_count == limit: break
         #end for
         logger.info('{} instances read from file <{}> {}.'.format(count, f.name, timer))
 
-        total_count += count
         if labels_field:
             labels_freq += freq
-            logger.info('Label frequencies for <{}>:\n{}'.format(f.name, tabulate(freq.most_common() + [('Labels total', sum(freq.values())), ('Cases total', count)], headers=('Label', 'Freq'), tablefmt='psql')))
+            logger.info('Label frequencies for <{}>:\n{}'.format(f.name, tabulate(freq.most_common() + [('Labels total', sum(freq.values())), ('Total', total_count)], headers=('Label', 'Freq'), tablefmt='psql')))
         #end if
 
-        if count == limit: break
+        if total_count >= limit: break
     #end for
 
     if labels_field and len(instance_files) > 1:
-        logger.info('Total label frequencies:\n{}'.format(tabulate(labels_freq.most_common() + [('Labels total', sum(labels_freq.values())), ('Cases total', count)], headers=('Label', 'Freq'), tablefmt='psql')))
+        logger.info('Total label frequencies:\n{}'.format(tabulate(labels_freq.most_common() + [('Labels total', sum(labels_freq.values())), ('Total', total_count)], headers=('Label', 'Freq'), tablefmt='psql')))
 #end def
 
 
