@@ -2,7 +2,7 @@ log_level: DEBUG
 
 n_jobs: 1
 
-featurizer_type: HelloWorldFeaturizer
+featurizer_type: helloworld.featurizers.HelloWorldFeaturizer
 featurizer_parameters:
 
 # classifier_type: HelloWorldBinaryLabelsClassifier
@@ -13,6 +13,6 @@ featurizer_parameters:
 # classifier_parameters:
 #   include: [apple, cherry]
 
-classifier_type: HelloWorldMulticlassClassifier
+classifier_type: helloworld.classifiers.HelloWorldMulticlassClassifier
 classifier_parameters:
   # include: [apple, cherry]
