@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 import csv
+from importlib import import_module
 import json
 import logging
 import os
@@ -12,11 +13,11 @@ from sklearn.metrics import classification_report
 
 from tabulate import tabulate
 
-from ycml.classifiers import load_classifier, get_thresholds_from_file
-from ycml.featurizers import load_featurized, save_featurized
-from ycml.utils import load_dictionary_from_file, get_settings, uri_open, URIFileType
+from ..classifiers import load_classifier, get_thresholds_from_file
+from ..featurizers import load_featurized, save_featurized
+from ..utils import shuffle_instances, load_dictionary_from_file, get_settings, uri_open, URIFileType
 
-from .classifiers import CLASSIFERS_MAP
+__all__ = []
 
 logger = logging.getLogger(__name__)
 
@@ -65,14 +66,18 @@ def main():
         classifier_parameters = get_settings((file_settings, 'classifier_parameters'), default={})
         classifier_parameters['n_jobs'] = get_settings(key='n_jobs', sources=(A, classifier_parameters, file_settings), default=1)
 
-        classifier_class = CLASSIFERS_MAP.get(classifier_type)
+        module_path, class_name = classifier_type.rsplit('.', 1)
+        module = import_module(module_path)
+        classifier_class = getattr(module, class_name)
+
         if not classifier_class: parser.error('Unknown model name "{}".'.format(classifier_type))
 
         X_featurized, Y_labels = load_featurized(A.featurized, keys=('X_featurized', 'Y_labels'))
+        X_featurized, Y_labels = shuffle_instances(X_featurized, Y_labels)
 
         classifier = classifier_class(**classifier_parameters).fit(X_featurized, Y_labels)
 
-        if A.output: classifier.save(A.output)
+        classifier.save(A.output)
 
     elif A.mode == 'evaluate':
         classifier = load_classifier(A.classifier_file)
@@ -90,10 +95,7 @@ def main():
         assert Y_predict_binarized.shape[0] == N
         assert Y_true_binarized.shape[0] == N
 
-        if len(classifier.classes_) == 1:
-            logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_predict_binarized, target_names=('not ' + classifier.classes_[0], classifier.classes_[0]))))
-        else:
-            logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_predict_binarized, target_names=classifier.classes_)))
+        logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_predict_binarized, target_names=['not spam', 'spam'])))
 
         if A.save_probabilities:
             np.savez_compressed(A.save_probabilities, featurizer_uuid=featurizer_uuid, classifier_uuid=classifier.uuid_, Y_proba=Y_proba, Y_true_binarized=Y_true_binarized, thresholds=thresholds, labels=classifier.classes_)

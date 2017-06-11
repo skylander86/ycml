@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from importlib import import_module
 import logging
 import sys
 
@@ -8,10 +9,8 @@ from scipy.sparse import issparse
 
 from tabulate import tabulate
 
-from ycml.featurizers import load_featurizer, load_featurized, save_featurized
-from ycml.utils import load_instances, URIFileType, load_dictionary_from_file, get_settings
-
-from .featurizers import FEATURIZERS_MAP
+from ..featurizers import load_featurizer, load_featurized, save_featurized
+from ..utils import load_instances, URIFileType, load_dictionary_from_file, get_settings
 
 __all__ = []
 
@@ -42,7 +41,7 @@ def main():
     logging.basicConfig(format=log_format, level=logging.getLevelName(log_level))
 
     featurizer_type = get_settings(key='featurizer_type', sources=(A, 'env', file_settings))
-    featurizer_parameters = get_settings(key='featurizer_parameters', source=(file_settings, ), default={})
+    featurizer_parameters = get_settings(key='featurizer_parameters', sources=(file_settings, ), default={})
     featurizer_parameters['n_jobs'] = get_settings(key='n_jobs', sources=(A, 'env', featurizer_parameters, file_settings), default=1)
 
     if A.instances:
@@ -50,7 +49,9 @@ def main():
 
     if A.fit:
         if not featurizer_type: parser.error('featurizer_type needs to be specified for fitting.'.format(featurizer_type))
-        model_class = FEATURIZERS_MAP.get(featurizer_type)
+        module_path, class_name = featurizer_type.rsplit('.', 1)
+        module = import_module(module_path)
+        model_class = getattr(module, class_name)
         if not model_class: parser.error('Unknown featurizer model "{}".'.format(featurizer_type))
 
         featurizer = model_class(**featurizer_parameters)
@@ -106,7 +107,7 @@ def main():
         logger.debug('Feature matrix has dimensions {}x{} ({:,} active features).'.format(X_featurized.shape[0], X_featurized.shape[1], len(X_featurized.data)))
 
         if A.output:
-            X_meta = np.array([dict(id=o['id']) for i, o in enumerate(X)], dtype=np.object)
+            X_meta = np.array([dict(id=o['_id']) for i, o in enumerate(X)], dtype=np.object)
             save_featurized(A.output, X_featurized=X_featurized, Y_labels=Y_labels, X_meta=X_meta, featurizer_uuid=featurizer.uuid_)
         #end if
     #end if
