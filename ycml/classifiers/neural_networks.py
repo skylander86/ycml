@@ -2,7 +2,6 @@ import logging
 import os
 import shutil
 from tempfile import NamedTemporaryFile
-import time
 
 try:
     from keras import backend as K
@@ -14,6 +13,8 @@ except ImportError:
     Callback = object
 
 import numpy as np
+
+from ..utils import Timer
 
 
 __all__ = ['KerasNNClassifierMixin', 'keras_f1_score', 'EarlyStopping']
@@ -79,10 +80,13 @@ class KerasNNClassifierMixin(object):
     #end def
 
     def save_to_tarfile(self, tar_file):
-        with NamedTemporaryFile(prefix=__name__ + '.', suffix='.h5', delete=True) as f:
-            self.nn_model_.save(f.name)
-            tar_file.add(f.name, arcname='nn_model.h5')
+        with NamedTemporaryFile(prefix=__name__ + '.', suffix='.h5', delete=False) as f:
+            temp_path = f.name
         #end with
+
+        self.nn_model_.save(temp_path)
+        tar_file.add(temp_path, arcname='nn_model.h5')
+        os.remove(temp_path)
 
         return self
     #end def
@@ -90,12 +94,21 @@ class KerasNNClassifierMixin(object):
     def load_from_tarfile(self, tar_file):
         self.set_session()
 
-        with NamedTemporaryFile(prefix='ix_aols_issues.', suffix='.h5', delete=True) as f:
-            start_time = time.time()
-            shutil.copyfileobj(tar_file.extractfile('nn_model.h5'), f)
-            self.nn_model_ = load_model(f.name, custom_objects=self.custom_objects)
-            logger.debug('Loaded neural network model weights (took {:.3f} seconds).'.format(time.time() - start_time))
-        #end with
+        fname = None
+        try:
+            with NamedTemporaryFile(prefix='ix_aols_issues.', suffix='.h5', delete=False) as f:
+                timer = Timer()
+                shutil.copyfileobj(tar_file.extractfile('nn_model.h5'), f)
+                fname = f.name
+            #end with
+
+            self.nn_model_ = load_model(fname, custom_objects=self.custom_objects)
+            logger.debug('Loaded neural network model weights {}.'.format(timer))
+
+        finally:
+            if fname:
+                os.remove(fname)
+        #end try
 
         return self
     #end def
@@ -158,16 +171,16 @@ class EarlyStopping(Callback):
     #end def
 
     def on_epoch_end(self, epoch, logs={}):
-        val_keras_f1_score = logs.get(self.monitor, 0.0)
-        self.val_scores.append(val_keras_f1_score)
-        if len(self.val_scores) < self.patience or epoch <= self.min_epoch or val_keras_f1_score < 0.2:  # hard limit
+        monitor_score = logs.get(self.monitor, 0.0)
+        self.val_scores.append(monitor_score)
+        if len(self.val_scores) < self.patience or epoch <= self.min_epoch or monitor_score < 0.2:  # hard limit
             return
 
         if self.min_epoch == epoch + 1:
             logger.info('Epoch {} > {} (min_epoch). Starting early stopping monitor.'.format(epoch, self.min_epoch))
 
         m = np.mean(self.val_scores[-self.patience - 1:-1])
-        delta = val_keras_f1_score - m
+        delta = abs(monitor_score - m)
         min_delta = self.min_delta * m
         # logger.debug('mean({}[-{}:])={}; delta={}; min_delta={};'.format(self.monitor, self.patience, m, delta, min_delta))
 
