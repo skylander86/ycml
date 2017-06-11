@@ -1,7 +1,11 @@
+import logging
+
 from .base import PureTransformer
 from .text import ListCountVectorizer
 
 __all__ = ['TokensToIndexTransformer']
+
+logger = logging.getLogger(__name__)
 
 
 class TokensToIndexTransformer(PureTransformer):
@@ -16,6 +20,7 @@ class TokensToIndexTransformer(PureTransformer):
 
     def fit(self, X, **kwargs):
         self.count_vectorizer_ = ListCountVectorizer(**self.count_vectorizer_args).fit(X)
+        logger.debug('TokensToIndexTransformer vocabulary fitted with size {}.'.format(len(self.vocabulary_)))
 
         return self
     #end def
@@ -44,6 +49,8 @@ class TokensToIndexTransformer(PureTransformer):
         if self.pad_sequences is not None:
             from keras.preprocessing.sequence import pad_sequences as keras_pad_sequences
             X_transformed = keras_pad_sequences(X_transformed, maxlen=None if self.pad_sequences is True else self.pad_sequences, **self.pad_sequences_args)
+            if self.pad_sequences is True:
+                logger.debug('TokensToIndexTransformer transformed sequences has max length {}.'.format(X_transformed.shape[1]))
         #end if
 
         return X_transformed
