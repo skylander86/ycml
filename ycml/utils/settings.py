@@ -45,6 +45,8 @@ def get_settings(*source_key_pairs, **kwargs):
     key = kwargs.pop('key', None)
     sources = kwargs.pop('sources', None)
 
+    assert not kwargs
+
     if key and sources:
         source_key_pairs = list(source_key_pairs) + [(src, key) for src in sources]
 
