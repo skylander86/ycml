@@ -40,7 +40,7 @@ def load_instances(instance_files, labels_field='labels', limit=None):
 
             count += 1
             total_count += 1
-            if total_count == limit: break
+            if limit and total_count == limit: break
         #end for
         logger.info('{} instances read from file <{}> {}.'.format(count, f.name, timer))
 
@@ -49,7 +49,7 @@ def load_instances(instance_files, labels_field='labels', limit=None):
             logger.info('Label frequencies for <{}>:\n{}'.format(f.name, tabulate(freq.most_common() + [('Labels total', sum(freq.values())), ('Total', total_count)], headers=('Label', 'Freq'), tablefmt='psql')))
         #end if
 
-        if total_count >= limit: break
+        if limit and total_count >= limit: break
     #end for
 
     if labels_field and len(instance_files) > 1:
