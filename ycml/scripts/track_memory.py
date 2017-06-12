@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals
+
 from argparse import ArgumentParser
 import logging
 import os
@@ -25,7 +27,7 @@ def main():
 
     logger.info('Collecting memory information for PIDs {} at a rate of {} seconds.'.format(A.pid, A.rate))
     ignored_pid = set()
-    if A.save: print >>A.save, '#', '\t'.join(['Timestamp', 'Pid-Name', 'Attribute', 'kB'])
+    if A.save: print('#', '\t'.join(['Timestamp', 'Pid-Name', 'Attribute', 'kB'], file=A.save))
     last_info = time.time()
     sample_count = 0
     have_data = True
@@ -54,8 +56,9 @@ def main():
             proc_key = '{}-{}'.format(pid, status['Name'])
             s = ['Process={}'.format(proc_key)]
             for k in TRACKED_STATUS:
-                if A.save: print >>A.save, '\t'.join([timestamp, proc_key, k, status[k]])
-                s.append('{}={}'.format(k, status[k]))
+                if A.save:
+                    print('\t'.join([timestamp, proc_key, k, status[k]]), file=A.save)
+                s.append('{}={}'.format(k, convert_memory(status[k])))
             #end for
             logger.info('; '.join(s))
             have_data = True
@@ -69,6 +72,21 @@ def main():
 
         time.sleep(A.rate)
     #end while
+#end def
+
+
+def convert_memory(kb_size):
+    converted = float(kb_size)
+    converted_unit = 'kB'
+
+    for unit in ['MB', 'GB', 'TB', 'PB']:
+        if converted > 1024:
+            converted /= 1024.0
+            converted_unit = unit
+        else: break
+    #end for
+
+    return '{:.3f}{}'.format(converted, converted_unit)
 #end def
 
 
