@@ -10,7 +10,7 @@ from scipy.sparse import issparse
 from tabulate import tabulate
 
 from ..featurizers import load_featurizer, load_featurized, save_featurized
-from ..utils import load_instances, URIFileType, load_dictionary_from_file, get_settings
+from ..utils import load_instances, URIFileType, load_dictionary_from_file, get_settings, parse_n_jobs
 
 __all__ = []
 
@@ -43,7 +43,7 @@ def main():
 
     featurizer_type = get_settings(key='featurizer_type', sources=(A, 'env', file_settings))
     featurizer_parameters = get_settings(key='featurizer_parameters', sources=(file_settings, ), default={})
-    featurizer_parameters['n_jobs'] = get_settings(key='n_jobs', sources=(A, 'env', featurizer_parameters, file_settings), default=1)
+    featurizer_parameters['n_jobs'] = parse_n_jobs(get_settings(key='n_jobs', sources=(A, 'env', featurizer_parameters, file_settings), default=1))
 
     if A.instances:
         X, Y_labels = list(map(np.array, zip(*load_instances(A.instances))))
@@ -115,7 +115,17 @@ def main():
                 shuffled_indexes = np.arange(X.shape[0])
             #end if
 
-            X_meta = np.array([dict(id=X[i]['_id']) for i in shuffled_indexes], dtype=np.object)
+            id_key = None
+            for key in ['_id', 'id', 'uuid']:
+                if key in X[0]:
+                    id_key = key
+                    break
+                #end if
+            #end for
+            if not id_key: raise logger.warning('Unable to find ID key in instances.')
+            else: logger.info('Using "{}" as key for ID field.'.format(id_key))
+
+            X_meta = np.array([dict(id=X[i][id_key]) for i in shuffled_indexes], dtype=np.object)
             save_featurized(A.output, X_featurized=X_featurized[shuffled_indexes, :], Y_labels=Y_labels[shuffled_indexes], X_meta=X_meta, featurizer_uuid=featurizer.uuid_)
         #end if
     #end if
