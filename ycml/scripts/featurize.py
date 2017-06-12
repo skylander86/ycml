@@ -44,9 +44,11 @@ def main():
     featurizer_type = get_settings(key='featurizer_type', sources=(A, 'env', file_settings))
     featurizer_parameters = get_settings(key='featurizer_parameters', sources=(file_settings, ), default={})
     featurizer_parameters['n_jobs'] = parse_n_jobs(get_settings(key='n_jobs', sources=(A, 'env', featurizer_parameters, file_settings), default=1))
+    labels_field = get_settings(key='labels_field', sources=('env', file_settings), default='labels')
+    logger.debug('Using "{}" for labels field.'.format(labels_field))
 
     if A.instances:
-        X, Y_labels = list(map(np.array, zip(*load_instances(A.instances))))
+        X, Y_labels = list(map(np.array, zip(*load_instances(A.instances, labels_field=labels_field))))
 
     if A.fit:
         if not featurizer_type: parser.error('featurizer_type needs to be specified for fitting.'.format(featurizer_type))
