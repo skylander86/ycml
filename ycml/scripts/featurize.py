@@ -25,6 +25,7 @@ def main():
     parser.add_argument('-s', '--settings', type=URIFileType('r'), metavar='<settings_uri>', help='Settings file to configure models.')
     parser.add_argument('--n-jobs', type=int, metavar='<N>', help='No. of processes to use during featurization.')
     parser.add_argument('--log-level', type=str, metavar='<log_level>', help='Set log level of logger.')
+    parser.add_argument('--shuffle', action='store_true', help='Shuffle ordering of instances before writing them to file.')
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-f', '--fit', type=URIFileType('wb'), metavar='<featurizer>', help='Fit instances and save featurizer model file here.')
@@ -107,8 +108,15 @@ def main():
         logger.debug('Feature matrix has dimensions {}x{} ({:,} active features).'.format(X_featurized.shape[0], X_featurized.shape[1], len(X_featurized.data)))
 
         if A.output:
-            X_meta = np.array([dict(id=o['_id']) for i, o in enumerate(X)], dtype=np.object)
-            save_featurized(A.output, X_featurized=X_featurized, Y_labels=Y_labels, X_meta=X_meta, featurizer_uuid=featurizer.uuid_)
+            if A.shuffle:
+                shuffled_indexes = np.random.permutation(X.shape[0])
+                logger.info('Featurized instances shuffled.')
+            else:
+                shuffled_indexes = np.arange(X.shape[0])
+            #end if
+
+            X_meta = np.array([dict(id=X[i]['_id']) for i in shuffled_indexes], dtype=np.object)
+            save_featurized(A.output, X_featurized=X_featurized[shuffled_indexes, :], Y_labels=Y_labels[shuffled_indexes], X_meta=X_meta, featurizer_uuid=featurizer.uuid_)
         #end if
     #end if
 #end def
