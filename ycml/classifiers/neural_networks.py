@@ -25,9 +25,10 @@ logger = logging.getLogger(__name__)
 class KerasNNClassifierMixin(object):
     PICKLE_IGNORED_ATTRIBUTES = set()
 
-    def __init__(self, tf_config=None, validation_size=0.1, epochs=10, batch_size=128, log_device_placement=False, verbose=0, early_stopping=None, save_best=None, save_weights=None, **kwargs):
+    def __init__(self, tf_config=None, validation_size=0.1, epochs=10, batch_size=128, passes_per_epoch=1, log_device_placement=False, verbose=0, early_stopping=None, save_best=None, save_weights=None, **kwargs):
         self.tf_config = tf_config
         self.batch_size = batch_size
+        self.passes_per_epoch = passes_per_epoch
         self.epochs = epochs
         self.log_device_placement = log_device_placement
         self.validation_size = validation_size
@@ -51,6 +52,55 @@ class KerasNNClassifierMixin(object):
 
         tf_session = tf.Session(config=tf_config)
         K.set_session(tf_session)
+    #end def
+
+    def fit(self, model, X, Y, **kwargs):
+        validation_data = kwargs.pop('validation_data', None)
+        return model.fit(X, Y, validation_data=validation_data, validation_split=self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), **kwargs)
+
+    def fit_generator(self, model, X, Y, generator_func=None, **kwargs):
+        N = X.shape[0]
+
+        validation_data = kwargs.pop('validation_data', None)
+        if validation_data is None:
+            shuffled_indexes = np.random.permutation(N)
+            validation_size = int(self.validation_size * N)
+            train_indexes, validation_indexes = shuffled_indexes[validation_size:], shuffled_indexes[:validation_size]
+            X_train, Y_train = X[train_indexes, :], Y[train_indexes]
+            validation_data = (X[validation_indexes, :], Y[validation_indexes])
+        else:
+            X_train, Y_train = X, Y
+        #end if
+        N_train = X_train.shape[0]
+        logger.debug('{} instances used for training and {} instances used for validation.'.format(N_train, validation_data[1].shape[0]))
+
+        steps_per_epoch = int((N_train * self.passes_per_epoch) / self.batch_size)
+        if steps_per_epoch <= 0: raise ValueError('steps_per_epoch ({}) is <= 0!'.format(steps_per_epoch))
+        logger.debug('Fit generator will run {} steps per epoch with batch size of {}. This will make 1 pass through the training data in {:.2f} epochs.'.format(steps_per_epoch, self.batch_size, N_train / (steps_per_epoch * self.batch_size)))
+
+        if generator_func is None:
+            generator_func = self._generator
+
+        return model.fit_generator(generator_func(X_train, Y_train, batch_size=self.batch_size), steps_per_epoch=steps_per_epoch, epochs=self.epochs, verbose=self.verbose, callbacks=self.build_callbacks(), validation_data=validation_data, **kwargs)
+    #end def
+
+    def _generator(self, X, Y, batch_size=128):
+        N = X.shape[0]
+        if batch_size > N: raise ValueError('batch_size ({}) is > than number of instances ({}).'.format(batch_size, N))
+
+        shuffled_indexes = np.random.permutation(N)
+        X_shuffled, Y_shuffled = X[shuffled_indexes, :], Y[shuffled_indexes]
+        cur = 0
+        while True:
+            if cur + batch_size >= N:
+                shuffled_indexes = np.random.permutation(N)
+                X_shuffled, Y_shuffled = X[shuffled_indexes, :], Y[shuffled_indexes, :]
+                cur = 0
+            #end if
+
+            yield (X_shuffled[cur:cur + batch_size, :], Y_shuffled[cur:cur + batch_size])
+            cur += batch_size
+        #end while
     #end def
 
     def build_callbacks(self):
