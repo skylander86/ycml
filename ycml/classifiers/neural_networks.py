@@ -54,11 +54,11 @@ class KerasNNClassifierMixin(object):
         K.set_session(tf_session)
     #end def
 
-    def fit(self, model, X, Y, **kwargs):
+    def keras_fit(self, model, X, Y, **kwargs):
         validation_data = kwargs.pop('validation_data', None)
         return model.fit(X, Y, validation_data=validation_data, validation_split=self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), **kwargs)
 
-    def fit_generator(self, model, X, Y, generator_func=None, **kwargs):
+    def keras_fit_generator(self, model, X, Y, generator_func=None, **kwargs):
         N = X.shape[0]
 
         validation_data = kwargs.pop('validation_data', None)
