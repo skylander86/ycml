@@ -84,8 +84,7 @@ def main():
 
         thresholds = 0.5
         if A.thresholds:
-            with uri_open(A.thresholds) as f:
-                thresholds = get_thresholds_from_file(f, classifier.classes_)
+            thresholds = get_thresholds_from_file(A.thresholds, classifier.classes_)
 
         X_featurized, Y_labels, featurizer_uuid = load_featurized(A.featurized_file, keys=('X_featurized', 'Y_labels', 'featurizer_uuid'))
         Y_proba, Y_predict_binarized = classifier.predict_and_proba(X_featurized, thresholds=thresholds, binarized=True)
@@ -95,7 +94,7 @@ def main():
         assert Y_predict_binarized.shape[0] == N
         assert Y_true_binarized.shape[0] == N
 
-        logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_predict_binarized, target_names=['not spam', 'spam'])))
+        logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_predict_binarized, target_names=classifier.classes_)))
 
         if A.save_probabilities:
             np.savez_compressed(A.save_probabilities, featurizer_uuid=featurizer_uuid, classifier_uuid=classifier.uuid_, Y_proba=Y_proba, Y_true_binarized=Y_true_binarized, thresholds=thresholds, labels=classifier.classes_)
