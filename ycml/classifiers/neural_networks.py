@@ -57,6 +57,7 @@ class KerasNNClassifierMixin(object):
     def keras_fit(self, model, X, Y, **kwargs):
         validation_data = kwargs.pop('validation_data', None)
         return model.fit(X, Y, validation_data=validation_data, validation_split=self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), **kwargs)
+    #end def
 
     def keras_fit_generator(self, model, X, Y, generator_func=None, **kwargs):
         N = X.shape[0]
