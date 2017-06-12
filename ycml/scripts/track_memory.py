@@ -9,8 +9,8 @@ from ..utils import URIFileType
 logger = logging.getLogger(__name__)
 
 
-VM_REGEX = re.compile(ur'(Vm\w+)\:\s+(\d+) kB')
-NAME_REGEX = re.compile(ur'(Name)\:\s+(.+)$')
+VM_REGEX = re.compile(r'(Vm\w+)\:\s+(\d+) kB')
+NAME_REGEX = re.compile(r'(Name)\:\s+(.+)$')
 TRACKED_STATUS = ['VmPeak', 'VmRSS', 'VmSize']
 
 
@@ -21,16 +21,16 @@ def main():
     parser.add_argument('--save', type=URIFileType('w'), metavar='<file>', help='Save sampled information to file.')
     A = parser.parse_args()
 
-    logging.basicConfig(format=u'%(asctime)-15s [%(name)s] %(levelname)s: %(message)s', level=logging.DEBUG)
+    logging.basicConfig(format='%(asctime)-15s [%(name)s] %(levelname)s: %(message)s', level=logging.DEBUG)
 
     logger.info('Collecting memory information for PIDs {} at a rate of {} seconds.'.format(A.pid, A.rate))
     ignored_pid = set()
-    if A.save: print >>A.save, u'#', u'\t'.join(['Timestamp', 'Pid-Name', 'Attribute', 'kB'])
+    if A.save: print >>A.save, '#', '\t'.join(['Timestamp', 'Pid-Name', 'Attribute', 'kB'])
     last_info = time.time()
     sample_count = 0
     have_data = True
     while True:
-        timestamp = u'{:.0f}'.format(time.time())
+        timestamp = '{:.0f}'.format(time.time())
         for pid in A.pid:
             if pid in ignored_pid: continue
             status_file = os.path.join('/proc', str(pid), 'status')
@@ -51,13 +51,13 @@ def main():
             #end with
             sample_count += 1
 
-            proc_key = u'{}-{}'.format(pid, status['Name'])
-            s = [u'Process={}'.format(proc_key)]
+            proc_key = '{}-{}'.format(pid, status['Name'])
+            s = ['Process={}'.format(proc_key)]
             for k in TRACKED_STATUS:
-                if A.save: print >>A.save, u'\t'.join([timestamp, proc_key, k, status[k]])
-                s.append(u'{}={}'.format(k, status[k]))
+                if A.save: print >>A.save, '\t'.join([timestamp, proc_key, k, status[k]])
+                s.append('{}={}'.format(k, status[k]))
             #end for
-            logger.info(u'; '.join(s))
+            logger.info('; '.join(s))
             have_data = True
         #end for
 
