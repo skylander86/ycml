@@ -13,6 +13,7 @@ except ImportError:
     Callback = object
 
 import numpy as np
+import scipy.sparse as sps
 
 from ..utils import Timer
 
@@ -68,7 +69,8 @@ class KerasNNClassifierMixin(object):
             validation_size = int(self.validation_size * N)
             train_indexes, validation_indexes = shuffled_indexes[validation_size:], shuffled_indexes[:validation_size]
             X_train, Y_train = X[train_indexes, :], Y[train_indexes]
-            validation_data = (X[validation_indexes, :].toarray(), Y[validation_indexes])
+            if sps.issparse(X): validation_data = (X[validation_indexes, :].todense(), Y[validation_indexes])
+            else: validation_data = (X[validation_indexes, :], Y[validation_indexes])
         else:
             X_train, Y_train = X, Y
         #end if
@@ -99,7 +101,9 @@ class KerasNNClassifierMixin(object):
                 cur = 0
             #end if
 
-            yield (X_shuffled[cur:cur + batch_size, :].toarray(), Y_shuffled[cur:cur + batch_size])
+            if sps.issparse(X): yield (X_shuffled[cur:cur + batch_size, :].todense(), Y_shuffled[cur:cur + batch_size])
+            else: yield (X_shuffled[cur:cur + batch_size, :], Y_shuffled[cur:cur + batch_size])
+
             cur += batch_size
         #end while
     #end def
