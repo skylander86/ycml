@@ -61,4 +61,10 @@ class TokensToIndexTransformer(PureTransformer):
 
     @property
     def stop_words_(self): return self.count_vectorizer_.stop_words_
+
+    def __repr__(self):
+        count_vectorizer_repr = '{}(vocabulary_={}, stop_words_={})'.format(self.count_vectorizer_.__class__, len(getattr(self.count_vectorizer_, 'vocabulary_', [])), len(getattr(self.count_vectorizer_, 'stop_words_', []))) if hasattr(self, 'count_vectorizer_') else None
+
+        return '{}(ignore_unknown={}, pad_sequences={}, count_vectorizer_args={}, pad_sequences_args={}, count_vectorizer_={})'.format(self.__class__, self.ignore_unknown, self.pad_sequences, self.count_vectorizer_args, self.pad_sequences_args, count_vectorizer_repr)
+    #end def
 #end class
