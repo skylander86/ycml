@@ -26,7 +26,16 @@ logger = logging.getLogger(__name__)
 class KerasNNClassifierMixin(object):
     PICKLE_IGNORED_ATTRIBUTES = set()
 
-    def __init__(self, tf_config=None, validation_size=0.1, epochs=10, batch_size=128, passes_per_epoch=1, log_device_placement=False, verbose=0, early_stopping=None, save_best=None, save_weights=None, **kwargs):
+    def __init__(
+        self,
+        tf_config=None,
+        epochs=10, batch_size=128, passes_per_epoch=1,
+        initial_weights=None, initial_epoch=0,
+        validation_size=0.2, verbose=0,
+        early_stopping=None, save_best=None, save_weights=None,
+        log_device_placement=False,
+        **kwargs
+    ):
         self.tf_config = tf_config
         self.batch_size = batch_size
         self.passes_per_epoch = passes_per_epoch
@@ -37,6 +46,8 @@ class KerasNNClassifierMixin(object):
         self.early_stopping = early_stopping
         self.save_weights = save_weights
         self.save_best = save_best
+        self.initial_weights = initial_weights
+        self.initial_epoch = initial_epoch
 
         self.set_session(tf_config)
     #end def
@@ -57,6 +68,9 @@ class KerasNNClassifierMixin(object):
 
     def keras_fit(self, model, X, Y, **kwargs):
         validation_data = kwargs.pop('validation_data', None)
+
+        if self.initial_weights: model.load_weights(self.initial_weights)
+
         return model.fit(X, Y, validation_data=validation_data, validation_split=self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), **kwargs)
     #end def
 
@@ -81,8 +95,9 @@ class KerasNNClassifierMixin(object):
         if steps_per_epoch <= 0: raise ValueError('steps_per_epoch ({}) is <= 0!'.format(steps_per_epoch))
         logger.debug('Fit generator will run {} steps per epoch with batch size of {}. This will make 1 pass through the training data in {:.2f} epochs.'.format(steps_per_epoch, self.batch_size, N_train / (steps_per_epoch * self.batch_size)))
 
-        if generator_func is None:
-            generator_func = self._generator
+        if generator_func is None: generator_func = self._generator
+
+        if self.initial_weights: model.load_weights(self.initial_weights)
 
         return model.fit_generator(generator_func(X_train, Y_train, batch_size=self.batch_size), steps_per_epoch=steps_per_epoch, epochs=self.epochs, verbose=self.verbose, callbacks=self.build_callbacks(), validation_data=validation_data, **kwargs)
     #end def
