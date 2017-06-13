@@ -73,6 +73,7 @@ def main():
             logger.info('Featurizer info for <{}>:\n{}'.format(f.name, tabulate([
                 ('Type', type(featurizer).__name__),
                 ('UUID', featurizer.uuid),
+                ('Repr', repr(featurizer)),
             ], headers=('Key', 'Value'), tablefmt='psql')))
         #end for
 
