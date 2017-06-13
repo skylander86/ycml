@@ -95,7 +95,7 @@ class KerasNNClassifierMixin(object):
         while True:
             if cur + batch_size >= N:
                 shuffled_indexes = np.random.permutation(N)
-                X_shuffled, Y_shuffled = X[shuffled_indexes, :], Y[shuffled_indexes, :]
+                X_shuffled, Y_shuffled = X[shuffled_indexes, :], Y[shuffled_indexes]
                 cur = 0
             #end if
 
