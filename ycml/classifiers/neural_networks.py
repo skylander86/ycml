@@ -37,19 +37,23 @@ class KerasNNClassifierMixin(object):
         **kwargs
     ):
         self.tf_config = tf_config
+        self.set_session(tf_config)
+
+        self.epochs = epochs
         self.batch_size = batch_size
         self.passes_per_epoch = passes_per_epoch
-        self.epochs = epochs
-        self.log_device_placement = log_device_placement
-        self.validation_size = validation_size
-        self.verbose = verbose
-        self.early_stopping = early_stopping
-        self.save_weights = save_weights
-        self.save_best = save_best
+
         self.initial_weights = initial_weights
         self.initial_epoch = initial_epoch
 
-        self.set_session(tf_config)
+        self.validation_size = validation_size
+        self.verbose = verbose
+
+        self.early_stopping = early_stopping
+        self.save_weights = save_weights
+        self.save_best = save_best
+
+        self.log_device_placement = log_device_placement
     #end def
 
     def set_session(self, tf_config=None):
@@ -71,7 +75,7 @@ class KerasNNClassifierMixin(object):
 
         if self.initial_weights: model.load_weights(self.initial_weights)
 
-        return model.fit(X, Y, validation_data=validation_data, validation_split=self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), **kwargs)
+        return model.fit(X, Y, validation_data=validation_data, validation_split=self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), initial_epoch=self.initial_epoch, **kwargs)
     #end def
 
     def keras_fit_generator(self, model, X, Y, generator_func=None, **kwargs):
@@ -99,7 +103,7 @@ class KerasNNClassifierMixin(object):
 
         if self.initial_weights: model.load_weights(self.initial_weights)
 
-        return model.fit_generator(generator_func(X_train, Y_train, batch_size=self.batch_size), steps_per_epoch=steps_per_epoch, epochs=self.epochs, verbose=self.verbose, callbacks=self.build_callbacks(), validation_data=validation_data, **kwargs)
+        return model.fit_generator(generator_func(X_train, Y_train, batch_size=self.batch_size), steps_per_epoch=steps_per_epoch, epochs=self.epochs, verbose=self.verbose, callbacks=self.build_callbacks(), validation_data=validation_data, initial_epoch=self.initial_epoch, **kwargs)
     #end def
 
     def _generator(self, X, Y, batch_size=128):
