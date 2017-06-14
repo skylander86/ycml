@@ -100,10 +100,16 @@ def save_featurized(f, X_featurized, Y_labels=None, **kwargs):
 
 def load_featurized(f, keys=[], raise_on_missing=True):
     timer = Timer()
-    o = np.load(f)
-    # print(type(o))  # numpy.lib.npyio.NpzFile
-    if not isinstance(o, NpzFile):
-        logger.warning('<{}> is not an instance of NpzFile. Perhaps you are loading the wrong file?'.format(f.name))
+
+    if f is None:
+        logger.warning('No featurized file is specified. Will return empty instances.')
+        o = dict(X_featurized=np.empty((0, 1)))
+        for k in keys: o[k] = None
+    else:
+        o = np.load(f)
+        if not isinstance(o, NpzFile):
+            logger.warning('<{}> is not an instance of NpzFile. Perhaps you are loading the wrong file?'.format(f.name))
+    #end if
 
     if not keys or 'X_featurized' in keys:
         if 'X_featurized_data' in o: X_featurized = csr_matrix((o['X_featurized_data'], o['X_featurized_indices'], o['X_featurized_indptr']), shape=o['X_featurized_shape'])
