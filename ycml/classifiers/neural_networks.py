@@ -17,7 +17,7 @@ import scipy.sparse as sps
 
 from sklearn.model_selection import train_test_split
 
-from ..utils import Timer, uri_open
+from ..utils import Timer, uri_to_tempfile
 
 
 __all__ = ['KerasNNClassifierMixin', 'keras_f1_score', 'EarlyStopping']
@@ -40,7 +40,6 @@ class KerasNNClassifierMixin(object):
         **kwargs
     ):
         self.tf_config = tf_config
-        self.set_session(tf_config)
 
         self.epochs = epochs
         self.batch_size = batch_size
@@ -57,6 +56,8 @@ class KerasNNClassifierMixin(object):
         self.save_best = save_best
 
         self.log_device_placement = log_device_placement
+
+        self.set_session(tf_config)
     #end def
 
     def set_session(self, tf_config=None):
@@ -77,7 +78,7 @@ class KerasNNClassifierMixin(object):
         if nn_model is None: nn_model = getattr(self, self.NN_MODEL_ATTRIBUTE)
 
         if self.initial_weights:
-            with uri_open(self.initial_weights) as f:
+            with uri_to_tempfile(self.initial_weights) as f:
                 nn_model.load_weights(f.name)
             logger.info('Loaded initial weights file from <{}>.'.format(self.initial_weights))
         #end if
@@ -95,7 +96,12 @@ class KerasNNClassifierMixin(object):
     def keras_fit_generator(self, X, Y, nn_model=None, generator_func=None, **kwargs):
         if nn_model is None: nn_model = getattr(self, self.NN_MODEL_ATTRIBUTE)
 
-        if self.initial_weights: nn_model.load_weights(self.initial_weights)
+        if self.initial_weights:
+            with uri_to_tempfile(self.initial_weights) as f:
+                nn_model.load_weights(f.name)
+            logger.info('Loaded initial weights file from <{}>.'.format(self.initial_weights))
+        #end if
+
         if self.epochs == 0:
             logger.warn('Epochs is set to 0. Model fitting will not continue.')
             return History()
