@@ -2,9 +2,13 @@
 This module provides wrapper function for transparently handling files regardless of location (local, cloud, etc).
 """
 
+from contextlib import contextmanager
 import gzip
 from io import BytesIO, TextIOWrapper
+import logging
 import os
+from shutil import copyfileobj
+from tempfile import NamedTemporaryFile
 
 try: from urlparse import urlparse  # Python 2
 except ImportError: from urllib.parse import urlparse  # Python 3
@@ -15,7 +19,9 @@ except ImportError: boto3 = None
 try: import requests
 except ImportError: requests = None
 
-__all__ = ['uri_open', 'uri_read', 'uri_dump', 'URIFileType', 'URIType']
+__all__ = ['uri_open', 'uri_to_tempfile', 'uri_read', 'uri_dump', 'URIFileType', 'URIType']
+
+logger = logging.getLogger(__name__)
 
 s3_client = boto3.client('s3')
 
@@ -43,9 +49,8 @@ def uri_open(uri, mode='r', encoding='utf-8', use_gzip='auto', io_args={}, urifs
 
         elif not o.scheme or o.scheme == 'file':
             fpath = os.path.join(o.netloc, o.path.lstrip('/')).rstrip('/') if o.netloc else o.path
-            fileobj = open(fpath, 'rb')
+            fileobj = open(fpath, mode)
         #end if
-
     else:  # write mode
         if o.scheme == 's3':
             if use_gzip: urifs_args['ContentEncoding'] = 'gzip'
@@ -64,6 +69,25 @@ def uri_open(uri, mode='r', encoding='utf-8', use_gzip='auto', io_args={}, urifs
     if not binary_mode: fileobj = TextIOWrapper(fileobj, encoding=encoding, **io_args)
 
     return fileobj
+#end def
+
+
+@contextmanager
+def uri_to_tempfile(uri, delete=True, **kwargs):
+    with uri_open(uri, mode='rb', use_gzip=False) as f_uri:
+        with NamedTemporaryFile(mode='wb', prefix='uri.', delete=False) as f_temp:
+            copyfileobj(f_uri, f_temp)
+            f_temp_name = f_temp.name
+        #end with
+    #end with
+    logger.debug('URI <{}> downloaded to temporary file <{}> ({} bytes).'.format(uri, f_temp_name, os.path.getsize(f_temp_name)))
+
+    f = uri_open(f_temp_name, **kwargs)
+
+    yield f
+
+    f.close()
+    if delete: os.remove(f_temp_name)
 #end def
 
 
