@@ -40,7 +40,11 @@ def main():
     evaluate_parser.add_argument('classifier_file', type=URIFileType(), metavar='<classifier_file>', help='Model file to use for evaluation.')
     evaluate_parser.add_argument('featurized_file', type=URIFileType(), metavar='<featurized_file>', help='Evaluate model on featurized instances.')
     evaluate_parser.add_argument('-t', '--thresholds', type=URIFileType(), metavar='<thresholds>', required=False, help='Threshold file to use for prediction.')
+    evaluate_parser.add_argument('-P', '--load-probabilities', type=URIFileType('rb'), metavar='<probabilities_file>', required=False, help='Load probabilities from here instead of recalculating.')
     evaluate_parser.add_argument('-p', '--save-probabilities', type=URIFileType('wb'), metavar='<probabilities_file>', required=False, help='Save evaluation probabilities; useful for calibration.')
+    evaluate_parser.add_argument('--best-thresholds', type=URIFileType('wb'), metavar='<thresholds_file>', required=False, help='Save best F1 threshold values here.')
+    evaluate_parser.add_argument('--minprec-thresholds', type=URIFileType('wb'), metavar='<thresholds_file>', required=False, help='Save minimum precision best F1 threshold values here.')
+    evaluate_parser.add_argument('--pr-curves', type=str, metavar='<folder>', required=False, help='Save precision-recall curves in this folder.')
 
     predict_parser = subparsers.add_parser('predict', help='Predict using a classifier.')
     predict_parser.add_argument('classifier_file', type=URIFileType(), metavar='<classifier_file>', help='Model file to use for prediction.')
