@@ -8,7 +8,7 @@ from sklearn.metrics import precision_recall_fscore_support
 
 from tabulate import tabulate
 
-__all__ = ['classification_report']
+__all__ = ['classification_report', 'find_best_thresholds']
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +125,7 @@ def classification_report(Y_true, Y_proba, labels=None, target_names=None, thres
 #end def
 
 
-def find_thresholds(Y_true, Y_proba, target_names=None, precision_thresholds=None):
+def find_best_thresholds(Y_true, Y_proba, precision_thresholds=None, target_names=None):
     if Y_proba.ndim == 1 or Y_proba.shape[1] == 1:
         temp = np.zeros((Y_proba.shape[0], 2))
         temp[:, 0] = Y_proba
