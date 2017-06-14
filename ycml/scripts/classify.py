@@ -82,19 +82,18 @@ def main():
     elif A.mode == 'evaluate':
         classifier = load_classifier(A.classifier_file)
 
-        thresholds = 0.5
+        thresholds = None
         if A.thresholds:
             thresholds = get_thresholds_from_file(A.thresholds, classifier.classes_)
 
         X_featurized, Y_labels, featurizer_uuid = load_featurized(A.featurized_file, keys=('X_featurized', 'Y_labels', 'featurizer_uuid'))
-        Y_proba, Y_predict_binarized = classifier.predict_and_proba(X_featurized, thresholds=thresholds, binarized=True)
+        Y_proba, _ = classifier.predict_and_proba(X_featurized, thresholds=thresholds, binarized=True)
         Y_true_binarized = classifier.binarize_labels(Y_labels)
 
         N = X_featurized.shape[0]
-        assert Y_predict_binarized.shape[0] == N
         assert Y_true_binarized.shape[0] == N
 
-        logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_predict_binarized, target_names=classifier.classes_)))
+        logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_proba, target_names=classifier.classes_, thresholds=thresholds, precision_thresholds=0.75)))
 
         if A.save_probabilities:
             np.savez_compressed(A.save_probabilities, featurizer_uuid=featurizer_uuid, classifier_uuid=classifier.uuid_, Y_proba=Y_proba, Y_true_binarized=Y_true_binarized, thresholds=thresholds, labels=classifier.classes_)
