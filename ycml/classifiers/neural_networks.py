@@ -17,7 +17,7 @@ import scipy.sparse as sps
 
 from sklearn.model_selection import train_test_split
 
-from ..utils import Timer
+from ..utils import Timer, uri_open
 
 
 __all__ = ['KerasNNClassifierMixin', 'keras_f1_score', 'EarlyStopping']
@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 class KerasNNClassifierMixin(object):
     PICKLE_IGNORED_ATTRIBUTES = set()
+    NN_MODEL_ATTRIBUTE = 'nn_model_'
 
     def __init__(
         self,
@@ -72,20 +73,29 @@ class KerasNNClassifierMixin(object):
         K.set_session(tf_session)
     #end def
 
-    def keras_fit(self, model, X, Y, **kwargs):
-        if self.initial_weights: model.load_weights(self.initial_weights)
+    def keras_fit(self, X, Y, nn_model=None, **kwargs):
+        if nn_model is None: nn_model = getattr(self, self.NN_MODEL_ATTRIBUTE)
+
+        if self.initial_weights:
+            with uri_open(self.initial_weights) as f:
+                nn_model.load_weights(f.name)
+            logger.info('Loaded initial weights file from <{}>.'.format(self.initial_weights))
+        #end if
+
         if self.epochs == 0:
-            logger.warn('Epochs is set to 0. Model fitting will not continue.')
+            logger.warning('Epochs is set to 0. Model fitting will not continue.')
             return History()
         #end if
 
         validation_data = kwargs.pop('validation_data', None)
 
-        return model.fit(X, Y, validation_data=validation_data, validation_split=self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), initial_epoch=self.initial_epoch, **kwargs)
+        return nn_model.fit(X, Y, validation_data=validation_data, validation_split=self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), initial_epoch=self.initial_epoch, **kwargs)
     #end def
 
-    def keras_fit_generator(self, model, X, Y, generator_func=None, **kwargs):
-        if self.initial_weights: model.load_weights(self.initial_weights)
+    def keras_fit_generator(self, X, Y, nn_model=None, generator_func=None, **kwargs):
+        if nn_model is None: nn_model = getattr(self, self.NN_MODEL_ATTRIBUTE)
+
+        if self.initial_weights: nn_model.load_weights(self.initial_weights)
         if self.epochs == 0:
             logger.warn('Epochs is set to 0. Model fitting will not continue.')
             return History()
@@ -107,7 +117,7 @@ class KerasNNClassifierMixin(object):
 
         if generator_func is None: generator_func = self._generator
 
-        return model.fit_generator(generator_func(X_train, Y_train, batch_size=self.batch_size), steps_per_epoch=steps_per_epoch, epochs=self.epochs, verbose=self.verbose, callbacks=self.build_callbacks(), validation_data=validation_data, initial_epoch=self.initial_epoch, **kwargs)
+        return nn_model.fit_generator(generator_func(X_train, Y_train, batch_size=self.batch_size), steps_per_epoch=steps_per_epoch, epochs=self.epochs, verbose=self.verbose, callbacks=self.build_callbacks(), validation_data=validation_data, initial_epoch=self.initial_epoch, **kwargs)
     #end def
 
     def _generator(self, X, Y, batch_size=128):
@@ -130,6 +140,11 @@ class KerasNNClassifierMixin(object):
             cur += batch_size
         #end while
     #end def
+
+    def keras_predict(self, X_featurized, nn_model=None, **kwargs):
+        if nn_model is None: nn_model = getattr(self, self.NN_MODEL_ATTRIBUTE)
+
+        return nn_model.predict_proba(X_featurized, batch_size=self.batch_size, verbose=self.verbose, **kwargs)
 
     def build_callbacks(self):
         callbacks = []
@@ -192,7 +207,7 @@ class KerasNNClassifierMixin(object):
     #end def
 
     def __getstate__(self):
-        ignored_attrs = set(['nn_model_', 'tf_session']) | self.PICKLE_IGNORED_ATTRIBUTES
+        ignored_attrs = set([self.NN_MODEL_ATTRIBUTE, 'tf_session']) | self.PICKLE_IGNORED_ATTRIBUTES
         return dict((k, v) for k, v in self.__dict__.items() if k not in ignored_attrs)
     #end def
 
