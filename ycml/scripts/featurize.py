@@ -22,7 +22,7 @@ def main():
     parser.add_argument('featurizer_type', type=str, metavar='<featurizer_type>', nargs='?', default=None, help='Name of featurizer model to use.')
     parser.add_argument('-i', '--instances', type=URIFileType(encoding='ascii'), nargs='*', default=[], metavar='<instances>', help='List of instance files to featurize.')
     parser.add_argument('-o', '--output', type=URIFileType('wb'), metavar='<features_uri>', help='Save featurized instances here.')
-    parser.add_argument('-s', '--settings', type=URIFileType('r'), metavar='<settings_uri>', help='Settings file to configure models.')
+    parser.add_argument('-s', '--settings', type=URIFileType('rb'), metavar='<settings_uri>', help='Settings file to configure models.')
     parser.add_argument('--n-jobs', type=int, metavar='<N>', help='No. of processes to use during featurization.')
     parser.add_argument('--log-level', type=str, metavar='<log_level>', help='Set log level of logger.')
     parser.add_argument('--shuffle', action='store_true', help='Shuffle ordering of instances before writing them to file.')
