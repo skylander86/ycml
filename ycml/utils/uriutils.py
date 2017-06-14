@@ -13,7 +13,9 @@ from tempfile import NamedTemporaryFile
 try: from urlparse import urlparse  # Python 2
 except ImportError: from urllib.parse import urlparse  # Python 3
 
-try: import boto3
+try:
+    import boto3
+    s3_client = boto3.client('s3')
 except ImportError: boto3 = None
 
 try: import requests
@@ -22,8 +24,6 @@ except ImportError: requests = None
 __all__ = ['uri_open', 'uri_to_tempfile', 'uri_read', 'uri_dump', 'URIFileType', 'URIType']
 
 logger = logging.getLogger(__name__)
-
-s3_client = boto3.client('s3')
 
 
 def uri_open(uri, mode='rb', encoding='utf-8', use_gzip='auto', io_args={}, urifs_args={}):
