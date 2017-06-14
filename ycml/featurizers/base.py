@@ -105,6 +105,7 @@ def load_featurized(f, keys=[], raise_on_missing=True):
         logger.warning('No featurized file is specified. Will return empty instances.')
         o = dict((k, None) for k in keys)
         o['X_featurized'] = np.empty((0, 1))
+        f = type('test', (), {'name': 'file not specified'})()  # Hack to get around displaying empty file name
     else:
         o = np.load(f)
         if not isinstance(o, NpzFile):
