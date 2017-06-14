@@ -1,4 +1,4 @@
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime
 import logging
 import pickle as pickle
@@ -103,7 +103,7 @@ def load_featurized(f, keys=[], raise_on_missing=True):
 
     if f is None:
         logger.warning('No featurized file is specified. Will return empty instances.')
-        o = dict((k, None) for k in keys)
+        o = defaultdict(None)
         o['X_featurized'] = np.empty((0, 1))
         o['Y_labels'] = np.empty((0, 1))
         f = type('test', (), {'name': 'file not specified'})()  # Hack to get around displaying empty file name

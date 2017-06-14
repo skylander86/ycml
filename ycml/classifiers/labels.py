@@ -86,6 +86,9 @@ class BinaryLabelsClassifier(LabelsClassifier):
     #end def
 
     def binarize_labels(self, Y_labels, pos_label=None):
+        if Y_labels.shape[0] == 0:
+            return np.zeros((0, 1))
+
         if pos_label is None:
             pos_label = self.pos_label
 
