@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 def main():
     parser = ArgumentParser(description='Classify instances using ML classifier.')
     parser.add_argument('--log-level', type=str, metavar='<log_level>', help='Set log level of logger.')
-    parser.add_argument('-s', '--settings', type=URIFileType('r'), metavar='<settings_file>', help='Settings file to configure models.')
+    parser.add_argument('-s', '--settings', type=URIFileType('rb'), metavar='<settings_file>', help='Settings file to configure models.')
     parser.add_argument('-c', '--classifier-info', type=URIFileType('rb'), metavar='<classifier_file>', help='Display information about classifier.')
     parser.add_argument('--n-jobs', type=int, metavar='<N>', help='No. of processor cores to use.')
 

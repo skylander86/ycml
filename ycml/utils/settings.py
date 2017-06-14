@@ -3,13 +3,15 @@ import logging
 import os
 import yaml
 
+from .uriutils import uri_open
+
 __all__ = ['load_dictionary_from_file', 'save_dictionary_to_file', 'get_settings']
 
 logger = logging.getLogger(__name__)
 
 
 def load_dictionary_from_file(f, title='dictionary'):
-    if isinstance(f, str): f = open(f, 'r')
+    if isinstance(f, str): f = uri_open(f, 'rb')
 
     _, ext = os.path.splitext(f.name.lower())
     if ext == '.json': o = json.load(f)
