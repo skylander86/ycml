@@ -150,7 +150,7 @@ class KerasNNClassifierMixin(object):
     def keras_predict(self, X_featurized, nn_model=None, **kwargs):
         if nn_model is None: nn_model = getattr(self, self.NN_MODEL_ATTRIBUTE)
         # return nn_model.predict_on_batch(X_featurized[:8192])
-        return nn_model.predict(X_featurized, batch_size=self.batch_size, verbose=self.verbose, **kwargs)
+        return nn_model.predict(X_featurized, batch_size=8192, verbose=self.verbose, **kwargs)
     #end def
 
     def build_callbacks(self):
