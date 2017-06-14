@@ -9,12 +9,12 @@ import sys
 
 import numpy as np
 
-from sklearn.metrics import classification_report
 
 from tabulate import tabulate
 
 from ..classifiers import load_classifier, get_thresholds_from_file
 from ..featurizers import load_featurized, save_featurized
+from ..utils import classification_report
 from ..utils import shuffle_instances, load_dictionary_from_file, get_settings, URIFileType
 
 __all__ = []
