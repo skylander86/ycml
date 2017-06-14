@@ -15,7 +15,7 @@ from tabulate import tabulate
 
 from ..classifiers import load_classifier, get_thresholds_from_file
 from ..featurizers import load_featurized, save_featurized
-from ..utils import shuffle_instances, load_dictionary_from_file, get_settings, uri_open, URIFileType
+from ..utils import shuffle_instances, load_dictionary_from_file, get_settings, URIFileType
 
 __all__ = []
 
@@ -25,33 +25,33 @@ logger = logging.getLogger(__name__)
 def main():
     parser = ArgumentParser(description='Classify instances using ML classifier.')
     parser.add_argument('--log-level', type=str, metavar='<log_level>', help='Set log level of logger.')
-    parser.add_argument('-s', '--settings', type=URIFileType('rb'), metavar='<settings_file>', help='Settings file to configure models.')
-    parser.add_argument('-c', '--classifier-info', type=URIFileType('rb'), metavar='<classifier_file>', help='Display information about classifier.')
+    parser.add_argument('-s', '--settings', type=URIFileType(), metavar='<settings_file>', help='Settings file to configure models.')
+    parser.add_argument('-c', '--classifier-info', type=URIFileType(), metavar='<classifier_file>', help='Display information about classifier.')
     parser.add_argument('--n-jobs', type=int, metavar='<N>', help='No. of processor cores to use.')
 
     subparsers = parser.add_subparsers(title='Different classifier modes for fitting, evaluating, and prediction.', metavar='<mode>', dest='mode')
 
     fit_parser = subparsers.add_parser('fit', help='Fit a classifier.')
     fit_parser.add_argument('classifier_type', type=str, metavar='<classifier_type>', nargs='?', help='Type of classifier model to fit.')
-    fit_parser.add_argument('-f', '--featurized', type=URIFileType('rb'), metavar='<featurized>', help='Fit model on featurized instances.')
+    fit_parser.add_argument('-f', '--featurized', type=URIFileType(), metavar='<featurized>', help='Fit model on featurized instances.')
     fit_parser.add_argument('-o', '--output', type=URIFileType('wb'), metavar='<classifier_file>', required=True, help='Save trained classifier model here.')
 
     evaluate_parser = subparsers.add_parser('evaluate', help='Evaluate a classifier.')
-    evaluate_parser.add_argument('classifier_file', type=URIFileType('rb'), metavar='<classifier_file>', help='Model file to use for evaluation.')
-    evaluate_parser.add_argument('featurized_file', type=URIFileType('rb'), metavar='<featurized_file>', help='Evaluate model on featurized instances.')
-    evaluate_parser.add_argument('-t', '--thresholds', type=URIFileType('r'), metavar='<thresholds>', required=False, help='Threshold file to use for prediction.')
+    evaluate_parser.add_argument('classifier_file', type=URIFileType(), metavar='<classifier_file>', help='Model file to use for evaluation.')
+    evaluate_parser.add_argument('featurized_file', type=URIFileType(), metavar='<featurized_file>', help='Evaluate model on featurized instances.')
+    evaluate_parser.add_argument('-t', '--thresholds', type=URIFileType(), metavar='<thresholds>', required=False, help='Threshold file to use for prediction.')
     evaluate_parser.add_argument('-p', '--save-probabilities', type=URIFileType('wb'), metavar='<probabilities_file>', required=False, help='Save evaluation probabilities; useful for calibration.')
 
     predict_parser = subparsers.add_parser('predict', help='Predict using a classifier.')
-    predict_parser.add_argument('classifier_file', type=URIFileType('rb'), metavar='<classifier_file>', help='Model file to use for prediction.')
-    predict_parser.add_argument('featurized_file', type=URIFileType('rb'), metavar='<featurized_file>', help='Predict labels of featurized instances.')
+    predict_parser.add_argument('classifier_file', type=URIFileType(), metavar='<classifier_file>', help='Model file to use for prediction.')
+    predict_parser.add_argument('featurized_file', type=URIFileType(), metavar='<featurized_file>', help='Predict labels of featurized instances.')
     predict_parser.add_argument('-t', '--thresholds', type=URIFileType('r'), metavar='<thresholds>', required=False, help='Threshold file to use for prediction.')
     predict_parser.add_argument('-o', '--output', type=URIFileType('wb'), metavar='<prediction_file>', help='Save results of prediction here.')
     predict_parser.add_argument('-f', '--format', type=str, metavar='<format>', default=None, choices=('json', 'csv', 'tsv', 'txt', 'npz'), help='Save results of prediction using this format (defaults to file extension).')
     predict_parser.add_argument('-p', '--probs', action='store_true', help='Also save prediction probabilities.')
 
     info_parser = subparsers.add_parser('info', help='Display information regarding classifier.')
-    info_parser.add_argument('classifier_file', type=URIFileType('rb'), metavar='<classifier_file>', help='Model file to display information onabout.')
+    info_parser.add_argument('classifier_file', type=URIFileType(), metavar='<classifier_file>', help='Model file to display information onabout.')
 
     A = parser.parse_args()
 

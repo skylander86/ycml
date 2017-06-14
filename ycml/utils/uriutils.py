@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 s3_client = boto3.client('s3')
 
 
-def uri_open(uri, mode='r', encoding='utf-8', use_gzip='auto', io_args={}, urifs_args={}):
+def uri_open(uri, mode='rb', encoding='utf-8', use_gzip='auto', io_args={}, urifs_args={}):
     o = urlparse(uri)
     if o.scheme not in ['', 'file', 's3']: raise Exception('Unknown URI scheme {}'.format(o.scheme))
     elif o.scheme == 's3' and boto3 is None: raise Exception('S3 is not supported. You will need to install boto3.')
@@ -49,7 +49,7 @@ def uri_open(uri, mode='r', encoding='utf-8', use_gzip='auto', io_args={}, urifs
 
         elif not o.scheme or o.scheme == 'file':
             fpath = os.path.join(o.netloc, o.path.lstrip('/')).rstrip('/') if o.netloc else o.path
-            fileobj = open(fpath, mode)
+            fileobj = open(fpath, 'rb')
         #end if
     else:  # write mode
         if o.scheme == 's3':
@@ -91,27 +91,27 @@ def uri_to_tempfile(uri, delete=True, **kwargs):
 #end def
 
 
-def uri_read(uri, mode='r', encoding='utf-8', use_gzip='auto', io_args={}, urifs_args={}):
+def uri_read(uri, mode='rb', encoding='utf-8', use_gzip='auto', io_args={}, urifs_args={}):
     with uri_open(uri, mode=mode, encoding=encoding, use_gzip=use_gzip, io_args=io_args, urifs_args=urifs_args) as f:
         content = f.read()
     return content
 #end def
 
 
-def uri_dump(uri, content, mode='w', encoding='utf-8', use_gzip='auto', io_args={}, urifs_args={}):
+def uri_dump(uri, content, mode='wb', encoding='utf-8', use_gzip='auto', io_args={}, urifs_args={}):
     with uri_open(uri, mode=mode, encoding=encoding, use_gzip=use_gzip, io_args=io_args, urifs_args=urifs_args) as f:
         f.write(content)
 #end def
 
 
 class URIFileType(object):
-    def __init__(self, mode='r', **kwargs):
-        self.mode = mode
+    def __init__(self, mode='rb', **kwargs):
         self.kwargs = kwargs
+        self.kwargs['mode'] = mode
     #end def
 
     def __call__(self, uri):
-        return uri_open(uri, mode=self.mode, **self.kwargs)
+        return uri_open(uri, **self.kwargs)
 #end class
 
 
