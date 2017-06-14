@@ -5,7 +5,7 @@ from tempfile import NamedTemporaryFile
 
 try:
     from keras import backend as K
-    from keras.callbacks import Callback, ModelCheckpoint
+    from keras.callbacks import Callback, ModelCheckpoint, History
     from keras.models import load_model
 
     import tensorflow as tf
@@ -71,14 +71,24 @@ class KerasNNClassifierMixin(object):
     #end def
 
     def keras_fit(self, model, X, Y, **kwargs):
-        validation_data = kwargs.pop('validation_data', None)
-
         if self.initial_weights: model.load_weights(self.initial_weights)
+        if self.epochs == 0:
+            logger.warn('Epochs is set to 0. Model fitting will not continue.')
+            return History()
+        #end if
+
+        validation_data = kwargs.pop('validation_data', None)
 
         return model.fit(X, Y, validation_data=validation_data, validation_split=self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), initial_epoch=self.initial_epoch, **kwargs)
     #end def
 
     def keras_fit_generator(self, model, X, Y, generator_func=None, **kwargs):
+        if self.initial_weights: model.load_weights(self.initial_weights)
+        if self.epochs == 0:
+            logger.warn('Epochs is set to 0. Model fitting will not continue.')
+            return History()
+        #end if
+
         N = X.shape[0]
 
         validation_data = kwargs.pop('validation_data', None)
@@ -100,8 +110,6 @@ class KerasNNClassifierMixin(object):
         logger.debug('Fit generator will run {} steps per epoch with batch size of {}. This will make 1 pass through the training data in {:.2f} epochs.'.format(steps_per_epoch, self.batch_size, N_train / (steps_per_epoch * self.batch_size)))
 
         if generator_func is None: generator_func = self._generator
-
-        if self.initial_weights: model.load_weights(self.initial_weights)
 
         return model.fit_generator(generator_func(X_train, Y_train, batch_size=self.batch_size), steps_per_epoch=steps_per_epoch, epochs=self.epochs, verbose=self.verbose, callbacks=self.build_callbacks(), validation_data=validation_data, initial_epoch=self.initial_epoch, **kwargs)
     #end def
