@@ -50,16 +50,15 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
 
         if not rescale: return Y_proba
 
-        n_classes = len(self.classes_)
         if isinstance(thresholds, (float, np.float)):
-            thresholds = np.full(n_classes, thresholds)
+            thresholds = np.full(Y_proba.shape[1], thresholds)
 
         if denominators is None:
             denominators = 2.0 * (1.0 - thresholds)
 
         rescaled = np.zeros(Y_proba.shape)
         for i in range(Y_proba.shape[0]):
-            for k in range(n_classes):
+            for k in range(Y_proba.shape[1]):
                 if Y_proba[i, k] > thresholds[k]: rescaled[i, k] = 0.5 + ((Y_proba[i, k] - thresholds[k]) / denominators[k])
                 else: rescaled[i, k] = Y_proba[i, k] / (thresholds[k] + thresholds[k])
             #end for
