@@ -15,6 +15,8 @@ except ImportError:
 import numpy as np
 import scipy.sparse as sps
 
+from sklearn.model_selection import train_test_split
+
 from ..utils import Timer
 
 
@@ -89,16 +91,10 @@ class KerasNNClassifierMixin(object):
             return History()
         #end if
 
-        N = X.shape[0]
-
         validation_data = kwargs.pop('validation_data', None)
         if validation_data is None:
-            shuffled_indexes = np.random.permutation(N)
-            validation_size = int(self.validation_size * N)
-            train_indexes, validation_indexes = shuffled_indexes[validation_size:], shuffled_indexes[:validation_size]
-            X_train, Y_train = X[train_indexes, :], Y[train_indexes]
-            if sps.issparse(X): validation_data = (X[validation_indexes, :].todense(), Y[validation_indexes])
-            else: validation_data = (X[validation_indexes, :], Y[validation_indexes])
+            X_train, X_validation, Y_train, Y_validation = train_test_split(X, Y, test_size=self.validation_size)
+            validation_data = (X_validation.todense() if sps.issparse(X_validation) else X_validation, Y_validation.todense() if sps.issparse(Y_validation) else Y_validation)
         else:
             X_train, Y_train = X, Y
         #end if
