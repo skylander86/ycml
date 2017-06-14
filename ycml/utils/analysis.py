@@ -32,7 +32,12 @@ def classification_report(Y_true, Y_proba, labels=None, target_names=None, thres
 
     n_classes = Y_true.shape[1]
     if target_names is None: target_names = list(range(n_classes))
-    labels = labels if labels else list(range(n_classes))
+
+    if labels:  # delete columns that we don't need
+        Y_true, Y_proba = Y_true[:, labels], Y_proba[:, labels]
+        target_names = [target_names[j] for j in labels]
+        n_classes = Y_true.shape[1]
+    #end if
 
     if isinstance(thresholds, float): thresholds = np.full((1, n_classes), thresholds)
     if thresholds is not None and thresholds.ndim == 1: thresholds = thresholds.T
@@ -49,8 +54,6 @@ def classification_report(Y_true, Y_proba, labels=None, target_names=None, thres
     thresholds_best = np.zeros((1, n_classes))
     thresholds_minprec = np.zeros((1, n_classes))
     for i, name in enumerate(target_names):
-        if i not in labels: continue
-
         # Results using 0.5 as threshold
         p, r, f1, _ = precision_recall_fscore_support(Y_true[:, i], Y_proba[:, i] >= 0.5, average='binary')  # Using thresholds
         support = Y_true[:, i].sum()
@@ -83,15 +86,16 @@ def classification_report(Y_true, Y_proba, labels=None, target_names=None, thres
                 best_f1_i = max(filter(lambda k: p[k] >= precision_thresholds[0, i], range(p.shape[0])), key=lambda k: f1[k])
                 if best_f1_i == p.shape[0] - 1 or f1[best_f1_i] == 0.0: raise ValueError()
 
+                thresholds_minprec[0, i] = t[best_f1_i]
+                # thresholds_minprec[0, i] = 0.5 if np.isclose(t[best_f1_i], 0.0) else t[best_f1_i]
+                row.append('{:.3f}: {:.3f}/{:.3f}/{:.3f}'.format(thresholds_minprec[0, i], p[best_f1_i], r[best_f1_i], f1[best_f1_i]))
+                # print(i, precision_thresholds[0, i], (Y_proba[:, i] >= precision_thresholds[0, i]).astype(int))
+
             except ValueError:
                 best_f1_i = np.argmax(f1)
-                logger.warn('Unable to find threshold for label "{}" where precision >= {}. Defaulting to best threshold of {}.'.format(target_names[i], precision_thresholds[0, i], t[best_f1_i]))
+                logger.warn('Unable to find threshold for label "{}" where precision >= {}.'.format(target_names[i], precision_thresholds[0, i], t[best_f1_i]))
+                row.append('-')
             #end try
-
-            thresholds_minprec[0, i] = t[best_f1_i]
-            # thresholds_minprec[0, i] = 0.5 if np.isclose(t[best_f1_i], 0.0) else t[best_f1_i]
-            row.append('{:.3f}: {:.3f}/{:.3f}/{:.3f}'.format(thresholds_minprec[0, i], p[best_f1_i], r[best_f1_i], f1[best_f1_i]))
-            # print(i, precision_thresholds[0, i], (Y_proba[:, i] >= precision_thresholds[0, i]).astype(int))
         #end if
 
         table.append(row)
@@ -102,18 +106,20 @@ def classification_report(Y_true, Y_proba, labels=None, target_names=None, thres
     headers.append('Best T')
     if precision_thresholds is not None: headers.append('Min Prec T')
 
-    macro_averages = ['Macro average', '-', '{:.3f}'.format(average_precision_score(Y_true, Y_proba, average='macro')), '{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= 0.5, average='macro', labels=labels))]
-    if thresholds is not None: macro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds, average='macro', labels=labels)))
-    macro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds_best, average='macro', labels=labels)))
-    if precision_thresholds is not None: macro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds_minprec, average='macro', labels=labels)))
+    if n_classes > 1:
+        macro_averages = ['Macro average', '-', '{:.3f}'.format(average_precision_score(Y_true, Y_proba, average='macro')), '{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= 0.5, average='macro'))]
+        if thresholds is not None: macro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds, average='macro')))
+        macro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds_best, average='macro')))
+        if precision_thresholds is not None: macro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds_minprec, average='macro')))
 
-    micro_averages = ['Micro average', '-', '{:.3f}'.format(average_precision_score(Y_true, Y_proba, average='micro')), '{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= 0.5, average='micro', labels=labels))]
-    if thresholds is not None: micro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds, average='micro', labels=labels)))
-    micro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds_best, average='micro', labels=labels)))
-    if precision_thresholds is not None: micro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds_minprec, average='micro', labels=labels)))
+        micro_averages = ['Micro average', '-', '{:.3f}'.format(average_precision_score(Y_true, Y_proba, average='micro')), '{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= 0.5, average='micro'))]
+        if thresholds is not None: micro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds, average='micro')))
+        micro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds_best, average='micro')))
+        if precision_thresholds is not None: micro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds_minprec, average='micro')))
 
-    table += [macro_averages, micro_averages]
-    table.insert(-2, ['-' * max(len(row[i]) for row in table + [headers]) for i in range(len(macro_averages))])
+        table += [macro_averages, micro_averages]
+        table.insert(-2, ['-' * max(len(row[i]) for row in table + [headers]) for i in range(len(macro_averages))])
+    #end if
 
     return tabulate(table, headers=headers, tablefmt='psql') + '\n{} labels, {} instances, {} instance-labels'.format(n_classes, Y_true.shape[0], int(support_total))
 #end def
@@ -173,11 +179,11 @@ def find_thresholds(Y_true, Y_proba, target_names=None, precision_thresholds=Non
 
 
 def main():
-    Y_true = np.zeros(10)
-    Y_proba = np.random.rand(10)
+    Y_true = np.zeros((10, 3))
+    Y_proba = np.random.rand(10, 3)
 
     Y_true[:4] = 1
-    print(classification_report(Y_true, Y_proba, labels=None, target_names=['ham', 'spam'], precision_thresholds=0.75))
+    print(classification_report(Y_true, Y_proba, target_names=['ham', 'spam', 'bam'], precision_thresholds=0.75))
 #end def
 
 
