@@ -40,10 +40,10 @@ def classification_report(Y_true, Y_proba, labels=None, target_names=None, thres
     #end if
 
     if isinstance(thresholds, float): thresholds = np.full((1, n_classes), thresholds)
-    if thresholds is not None and thresholds.ndim == 1: thresholds = thresholds.T
+    if thresholds is not None and thresholds.ndim == 1: thresholds = thresholds.reshape(1, n_classes)
 
     if isinstance(precision_thresholds, float): precision_thresholds = np.full((1, n_classes), precision_thresholds)
-    if precision_thresholds is not None and precision_thresholds.ndim == 1: precision_thresholds = precision_thresholds.T
+    if precision_thresholds is not None and precision_thresholds.ndim == 1: precision_thresholds = precision_thresholds.reshape(1, n_classes)
 
     assert Y_true.shape[0] == Y_proba.shape[0]
     assert Y_true.shape[1] == Y_proba.shape[1]
@@ -67,8 +67,8 @@ def classification_report(Y_true, Y_proba, labels=None, target_names=None, thres
         # Results using given thresholds
         if thresholds is not None:
             p, r, f1, _ = precision_recall_fscore_support(Y_true[:, i], Y_proba[:, i] >= thresholds[0, i], average='binary')  # Using thresholds
-            row.append('{:.3f}/{:.3f}/{:.3f}'.format(p, r, f1))
-            print(i, thresholds[0, i], (Y_proba[:, i] >= thresholds[0, i]).astype(int))
+            row.append('{:.3f}: {:.3f}/{:.3f}/{:.3f}'.format(thresholds[0, i], p, r, f1))
+            # print(i, thresholds[0, i], (Y_proba[:, i] >= thresholds[0, i]).astype(int))
         #end if
 
         # Results using optimal threshold
