@@ -103,8 +103,8 @@ def load_featurized(f, keys=[], raise_on_missing=True):
 
     if f is None:
         logger.warning('No featurized file is specified. Will return empty instances.')
-        o = dict(X_featurized=np.empty((0, 1)))
-        for k in keys: o[k] = None
+        o = dict((k, None) for k in keys)
+        o['X_featurized'] = np.empty((0, 1))
     else:
         o = np.load(f)
         if not isinstance(o, NpzFile):
