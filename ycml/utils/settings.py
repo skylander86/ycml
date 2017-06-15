@@ -1,7 +1,10 @@
 import json
 import logging
 import os
-import yaml
+import pickle
+
+try: import yaml
+except ImportError: pass
 
 from .uriutils import uri_open
 
@@ -18,6 +21,7 @@ def load_dictionary_from_file(f, *, force_format=None, title='dictionary'):
 
     if ext == '.json': o = json.load(f)
     elif ext == '.yaml': o = yaml.load(f)
+    elif ext == '.pickle': o = pickle.load(f)
     else: raise ValueError('<{}> is an unrecognized format for dictionary. Only JSON and YAML are supported right now.')
 
     logger.info('Loaded {} {} from <{}>.'.format(ext[1:].upper(), title, f.name))
@@ -40,6 +44,9 @@ def save_dictionary_to_file(f, d, *, force_format=None, title='dictionary', **kw
     elif ext == '.yaml':
         kwargs.setdefault('default_flow_style', False)
         yaml.dump(d, f, **kwargs)
+
+    elif ext == '.pickle':
+        pickle.dump(d, f, **kwargs)
 
     else: raise ValueError('<{}> is an unrecognized format for {}. Only JSON and YAML are supported right now.'.format(title))
 
