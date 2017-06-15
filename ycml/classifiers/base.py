@@ -43,7 +43,7 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
 
     def _fit(self, *args, **kwargs): raise NotImplementedError('_fit is not implemented.')
 
-    def predict_proba(self, X_featurized, thresholds=0.5, denominators=None, rescale=False, **kwargs):
+    def predict_proba(self, X_featurized, *, thresholds=0.5, denominators=None, rescale=False, **kwargs):
         timer = Timer()
         Y_proba = self._predict_proba(X_featurized, **kwargs)
         logger.debug('Computed prediction probabilities on {} instances {}.'.format(X_featurized.shape[0], timer))
@@ -76,7 +76,7 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
         return Y_predict
     #end def
 
-    def predict_and_proba(self, X_featurized, thresholds=0.5, rescale=False, **kwargs):
+    def predict_and_proba(self, X_featurized, *, thresholds=0.5, rescale=False, **kwargs):
         Y_proba = self.predict_proba(X_featurized, thresholds=thresholds, rescale=rescale, **kwargs)
 
         if rescale: Y_predict = Y_proba >= 0.5
@@ -149,7 +149,7 @@ def load_classifier(f):
 #end def
 
 
-def get_thresholds_from_file(f, classes, default=0.5):
+def get_thresholds_from_file(f, classes, *, default=0.5):
     d = load_dictionary_from_file(f)
     return np.array([float(d.get(c, default)) for c in classes])
 #end def

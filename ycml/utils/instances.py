@@ -57,7 +57,7 @@ def load_instances(instance_files, labels_field='labels', limit=None):
 #end def
 
 
-def shuffle_instances(X, Y, limit=None):
+def shuffle_instances(X, Y, *, limit=None):
     indices = np.arange(X.shape[0])
     np.random.shuffle(indices)
     if limit: indices = indices[:limit]
