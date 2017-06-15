@@ -87,11 +87,11 @@ def load_featurizer(f):
 #end def
 
 
-def save_featurized(f, X_featurized, Y_labels=None, **kwargs):
+def save_featurized(f, X_featurized, *, Y_labels=None, featurized_at=datetime.utcnow(), **kwargs):
     if issparse(X_featurized):
-        np.savez_compressed(f, X_featurized_data=X_featurized.data, X_featurized_indices=X_featurized.indices, X_featurized_indptr=X_featurized.indptr, X_featurized_shape=X_featurized.shape, Y_labels=Y_labels, featurized_at=datetime.utcnow(), **kwargs)  # Always use compression
+        np.savez_compressed(f, X_featurized_data=X_featurized.data, X_featurized_indices=X_featurized.indices, X_featurized_indptr=X_featurized.indptr, X_featurized_shape=X_featurized.shape, Y_labels=Y_labels, featurized_at=featurized_at, **kwargs)  # Always use compression
     else:
-        np.savez_compressed(f, X_featurized=X_featurized, Y_labels=Y_labels, featurized_at=datetime.utcnow(), **kwargs)  # Always use compression
+        np.savez_compressed(f, X_featurized=X_featurized, Y_labels=Y_labels, featurized_at=featurized_at, **kwargs)  # Always use compression
     #end if
 
     logger.info('Saved {} featurized instances and its metadata to <{}>.'.format(X_featurized.shape[0], f.name))
