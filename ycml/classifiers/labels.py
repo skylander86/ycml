@@ -49,9 +49,6 @@ class LabelsClassifier(BaseClassifier):
 
     def unbinarize_labels(self, Y_binarized, epsilon=0.0): raise NotImplementedError('unbinarize_labels is not implemented.')
 
-    @property
-    def classes_(self): raise NotImplementedError('classes_ is not implemented.')
-
     def _filter_labels(self, Y_labels):
         if self.exclude or self.include:
             Y_labels_filtered = np.empty(Y_labels.shape, dtype=np.object)

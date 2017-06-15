@@ -127,6 +127,9 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
     def name(self):
         return type(self).__name__
 
+    @property
+    def classes_(self): raise NotImplementedError('classes_ is not implemented.')
+
     def __str__(self):
         return '{}(UUID={})'.format(self.name, self.uuid_ if hasattr(self, 'uuid_') else 'None')
 #end class
