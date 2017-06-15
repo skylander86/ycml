@@ -1,14 +1,17 @@
 from argparse import ArgumentParser
 import csv
 from importlib import import_module
+from io import TextIOWrapper
 import json
 import logging
 import os
 import re
 import sys
 
-import numpy as np
+try: import yaml
+except ImportError: pass
 
+import numpy as np
 
 from tabulate import tabulate
 
@@ -52,8 +55,8 @@ def main():
     predict_parser.add_argument('classifier_file', type=URIFileType(), metavar='<classifier_file>', help='Model file to use for prediction.')
     predict_parser.add_argument('featurized_file', type=URIFileType(), metavar='<featurized_file>', help='Predict labels of featurized instances.')
     predict_parser.add_argument('-t', '--thresholds', type=URIFileType('r'), metavar='<thresholds>', help='Threshold file to use for prediction.')
-    predict_parser.add_argument('-o', '--output', type=URIFileType('wb'), metavar='<prediction_file>', help='Save results of prediction here.')
-    predict_parser.add_argument('-f', '--format', type=str, metavar='<format>', choices=('json', 'csv', 'tsv', 'txt', 'npz'), help='Save results of prediction using this format (defaults to file extension).')
+    predict_parser.add_argument('-o', '--output', type=URIFileType('wb'), metavar='<prediction_file>', default=sys.stdout.buffer, help='Save results of prediction here.')
+    predict_parser.add_argument('--format', type=str, metavar='<format>', choices=('json', 'csv', 'tsv', 'txt', 'npz', 'yaml'), help='Prediction file format (defaults to file extension).')
     predict_parser.add_argument('-p', '--probs', action='store_true', help='Also save prediction probabilities.')
 
     info_parser = subparsers.add_parser('info', help='Display information regarding classifier.')
@@ -86,7 +89,6 @@ def main():
         if A.output: classifier.save(A.output)
 
     elif A.mode == 'evaluate':
-
         thresholds = None
 
         if A.load_probabilities:
@@ -135,25 +137,27 @@ def main():
         #end if
 
     elif A.mode == 'predict':
-        output_format = None
-        if A.output is None:
-            A.output = sys.stdout
-            output_format = 'tsv'
-        #end if
-
+        output_file, output_format = A.output, None
         if A.format is not None: output_format = A.format
-        elif output_format is None:
-            _, output_format = os.path.splitext(A.output.name)
-            output_format = output_format[1:].lower()
+        else:
+            if output_file.name.endswith('.gz'): _, output_format = os.path.splitext(output_file.name[:-3])
+            else: _, output_format = os.path.splitext(output_file.name)
+
+            if output_format.startswith('.'): output_format = output_format[1:].lower()
+            else: output_format = 'json'
         #end if
 
         classifier = load_classifier(A.classifier_file)
+        thresholds = get_thresholds_from_file(A.thresholds, classifier.classes_) if A.thresholds else None
+
+        if output_format in ['csv', 'tsv', 'txt', '', 'json', 'yaml']:
+            output_file = TextIOWrapper(output_file, encoding='utf-8')
 
         if output_format in ['csv', 'tsv', 'txt', '']:
             if A.probs:
-                writer = csv.DictWriter(A.output, fieldnames=['ID'] + list(classifier.classes_) + ['p({})'.format(c) for c in classifier.classes_], dialect='excel' if output_format == '.csv' else 'excel-tab')
+                writer = csv.DictWriter(output_file, fieldnames=['ID'] + list(classifier.classes_) + ['p({})'.format(c) for c in classifier.classes_], dialect='excel' if output_format == '.csv' else 'excel-tab')
             else:
-                writer = csv.DictWriter(A.output, fieldnames=['ID'] + list(classifier.classes_), dialect='excel' if output_format == '.csv' else 'excel-tab')
+                writer = csv.DictWriter(output_file, fieldnames=['ID'] + list(classifier.classes_), dialect='excel' if output_format == '.csv' else 'excel-tab')
 
             def _write_prediction(id_, pred, proba):
                 o = dict((c, '0.0') for c in classifier.classes_)
@@ -166,35 +170,41 @@ def main():
 
                 writer.writerow(o)
             #end def
+
         elif output_format in ['json']:
             def _write_prediction(id_, pred, proba):
                 o = dict(id=id_, labels=pred)
                 if proba: o['probabilities'] = proba
-                A.output.write(json.dumps(o))
-                A.output.write(b'\n')
+                output_file.write(json.dumps(o, ensure_ascii=True))
+                output_file.write('\n')
             #end def
-        elif output_format in ['npz']:
+
+        elif output_format in ['yaml']:
             def _write_prediction(id_, pred, proba):
-                return
+                o = dict(id=id_, labels=pred)
+                if proba: o['probabilities'] = proba
+                output_file.write('---\n')
+                output_file.write(yaml.dump(o, default_flow_style=False))
+            #end def
+
+        elif output_format in ['npz']:
+            def _write_prediction(id_, pred, proba): return
 
         else: parser.error('"{}" is an unknown output format.'.format(output_format))
 
-        thresholds = 0.5
-
-        featurizer_uuid, X_featurized, X_meta, Y_labels, featurized_at = load_featurized(A.featurized_file, keys=['featurizer_uuid', 'X_featurized', 'X_meta', 'Y_labels', 'featurized_at'])
+        featurizer_uuid, X_featurized, X_meta = load_featurized(A.featurized_file, keys=['featurizer_uuid', 'X_featurized', 'X_meta'])
         Y_proba, Y_predict_binarized = classifier.predict_and_proba(X_featurized, thresholds=thresholds)
         Y_predict_labels = classifier.unbinarize_labels(Y_predict_binarized)
 
         for i in range(X_featurized.shape[0]):
             X_meta[i]['predicted'] = Y_predict_labels[i]
             if A.probs: X_meta[i]['probabilities'] = dict((c, float(Y_proba[i, j])) for j, c in enumerate(classifier.classes_))
-            _write_prediction(X_meta[i]['id'], Y_predict_labels[i], X_meta[i]['probabilities'] if A.probs else None)
+            _write_prediction(X_meta[i]['id'], list(Y_predict_labels[i]), X_meta[i]['probabilities'] if A.probs else None)
         #end for
 
-        if output_format in ['.npz']:
-            save_featurized(A.output, featurizer_uuid, X_featurized, X_meta, Y_labels, featurized_at)
+        if output_format in ['npz']: save_featurized(output_file, X_featurized, Y_labels=Y_predict_labels, featurizer_uuid=featurizer_uuid, X_meta=X_meta)
 
-        logger.info('Saved predictions to <{}>.'.format(A.output.name))
+        logger.info('Saved {} predictions to <{}> in {} format.'.format(Y_predict_labels.shape[0], output_file.name, output_format.upper()))
 
     elif A.mode == 'info':
         classifier = load_classifier(A.classifier_file)
