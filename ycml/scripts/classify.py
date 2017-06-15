@@ -35,24 +35,25 @@ def main():
     fit_parser = subparsers.add_parser('fit', help='Fit a classifier.')
     fit_parser.add_argument('classifier_type', type=str, metavar='<classifier_type>', nargs='?', help='Type of classifier model to fit.')
     fit_parser.add_argument('-f', '--featurized', type=URIFileType(), metavar='<featurized>', help='Fit model on featurized instances.')
-    fit_parser.add_argument('-o', '--output', type=URIFileType('wb'), metavar='<classifier_file>', required=True, help='Save trained classifier model here.')
+    fit_parser.add_argument('-o', '--output', type=URIFileType('wb'), metavar='<classifier_file>', help='Save trained classifier model here.')
 
     evaluate_parser = subparsers.add_parser('evaluate', help='Evaluate a classifier.')
-    evaluate_parser.add_argument('-c', '--classifier', type=URIFileType(), metavar='<classifier_file>', default=None, help='Classifier file to use for evaluation.')
-    evaluate_parser.add_argument('-f', '--featurized', type=URIFileType(), metavar='<featurized_file>', default=None, help='Featurized instances for evaluation.')
-    evaluate_parser.add_argument('-t', '--thresholds', type=URIFileType(), metavar='<thresholds>', required=False, help='Threshold file to use for prediction.')
-    evaluate_parser.add_argument('--load-probabilities', type=URIFileType('rb'), metavar='<probabilities_file>', required=False, help='Load probabilities from here instead of recalculating.')
-    evaluate_parser.add_argument('--save-probabilities', type=URIFileType('wb'), metavar='<probabilities_file>', required=False, help='Save evaluation probabilities; useful for calibration.')
-    evaluate_parser.add_argument('--best-thresholds', type=URIFileType('wb'), metavar='<thresholds_file>', required=False, help='Save best F1 threshold values here.')
-    evaluate_parser.add_argument('--minprec-thresholds', type=URIFileType('wb'), metavar='<thresholds_file>', required=False, help='Save minimum precision best F1 threshold values here.')
-    evaluate_parser.add_argument('--pr-curves', type=str, metavar='<folder>', required=False, help='Save precision-recall curves in this folder.')
+    evaluate_parser.add_argument('-c', '--classifier', type=URIFileType(), metavar='<classifier_file>', help='Classifier file to use for evaluation.')
+    evaluate_parser.add_argument('-f', '--featurized', type=URIFileType(), metavar='<featurized_file>', help='Featurized instances for evaluation.')
+    evaluate_parser.add_argument('-t', '--thresholds', type=URIFileType(), metavar='<thresholds>', help='Threshold file to use for prediction.')
+    evaluate_parser.add_argument('--load-probabilities', type=URIFileType('rb'), metavar='<probabilities_file>', help='Load probabilities from here instead of recalculating.')
+    evaluate_parser.add_argument('--save-probabilities', type=URIFileType('wb'), metavar='<probabilities_file>', help='Save evaluation probabilities; useful for calibration.')
+    evaluate_parser.add_argument('--min-precision', type=float, metavar='<precision>', default=0.75, help='Set the minimum precision threshold.')
+    evaluate_parser.add_argument('--best-thresholds', type=URIFileType('wb'), metavar='<thresholds_file>', help='Save best F1 threshold values here.')
+    evaluate_parser.add_argument('--minprec-thresholds', type=URIFileType('wb'), metavar='<thresholds_file>', help='Save minimum precision best F1 threshold values here.')
+    evaluate_parser.add_argument('--pr-curves', type=str, metavar='<folder>', help='Save precision-recall curves in this folder.')
 
     predict_parser = subparsers.add_parser('predict', help='Predict using a classifier.')
     predict_parser.add_argument('classifier_file', type=URIFileType(), metavar='<classifier_file>', help='Model file to use for prediction.')
     predict_parser.add_argument('featurized_file', type=URIFileType(), metavar='<featurized_file>', help='Predict labels of featurized instances.')
-    predict_parser.add_argument('-t', '--thresholds', type=URIFileType('r'), metavar='<thresholds>', required=False, help='Threshold file to use for prediction.')
+    predict_parser.add_argument('-t', '--thresholds', type=URIFileType('r'), metavar='<thresholds>', help='Threshold file to use for prediction.')
     predict_parser.add_argument('-o', '--output', type=URIFileType('wb'), metavar='<prediction_file>', help='Save results of prediction here.')
-    predict_parser.add_argument('-f', '--format', type=str, metavar='<format>', default=None, choices=('json', 'csv', 'tsv', 'txt', 'npz'), help='Save results of prediction using this format (defaults to file extension).')
+    predict_parser.add_argument('-f', '--format', type=str, metavar='<format>', choices=('json', 'csv', 'tsv', 'txt', 'npz'), help='Save results of prediction using this format (defaults to file extension).')
     predict_parser.add_argument('-p', '--probs', action='store_true', help='Also save prediction probabilities.')
 
     info_parser = subparsers.add_parser('info', help='Display information regarding classifier.')
@@ -82,7 +83,7 @@ def main():
 
         classifier = classifier_class(**classifier_parameters).fit(X_featurized, Y_labels)
 
-        classifier.save(A.output)
+        if A.output: classifier.save(A.output)
 
     elif A.mode == 'evaluate':
 
@@ -110,7 +111,7 @@ def main():
             assert Y_true_binarized.shape[0] == N
         #end if
 
-        logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_proba, target_names=labels, thresholds=thresholds, precision_thresholds=0.75)))
+        logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_proba, target_names=labels, thresholds=thresholds, precision_thresholds=A.min_precision)))
 
         if A.save_probabilities:
             np.savez_compressed(A.save_probabilities, featurizer_uuid=featurizer_uuid, classifier_uuid=classifier.uuid_, Y_proba=Y_proba, Y_true_binarized=Y_true_binarized, thresholds=thresholds, labels=labels)
@@ -118,9 +119,15 @@ def main():
         #end if
 
         if A.best_thresholds:
-            best_thresholds = find_best_thresholds(Y_true_binarized, Y_proba, precision_thresholds=0.75, target_names=labels)
+            best_thresholds = find_best_thresholds(Y_true_binarized, Y_proba, target_names=labels)
             o = dict((c, best_thresholds[i]) for i, c in enumerate(labels))
             save_dictionary_to_file(A.best_thresholds, o, title='thresholds')
+        #end if
+
+        if A.minprec_thresholds:
+            minprec_thresholds = find_best_thresholds(Y_true_binarized, Y_proba, precision_thresholds=A.min_precision, target_names=labels)
+            o = dict((c, minprec_thresholds[i]) for i, c in enumerate(labels))
+            save_dictionary_to_file(A.minprec_thresholds, o, title='thresholds')
         #end if
 
     elif A.mode == 'predict':

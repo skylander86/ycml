@@ -13,7 +13,7 @@ __all__ = ['classification_report', 'find_best_thresholds']
 logger = logging.getLogger(__name__)
 
 
-def classification_report(Y_true, Y_proba, labels=None, target_names=None, thresholds=None, precision_thresholds=None):
+def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, thresholds=None, precision_thresholds=None):
     if Y_proba.ndim == 1 or Y_proba.shape[1] == 1:
         temp = np.zeros((Y_proba.shape[0], 2))
         temp[:, 0] = Y_proba
@@ -125,7 +125,7 @@ def classification_report(Y_true, Y_proba, labels=None, target_names=None, thres
 #end def
 
 
-def find_best_thresholds(Y_true, Y_proba, precision_thresholds=None, target_names=None):
+def find_best_thresholds(Y_true, Y_proba, *, precision_thresholds=None, target_names=None):
     if Y_proba.ndim == 1 or Y_proba.shape[1] == 1:
         temp = np.zeros((Y_proba.shape[0], 2))
         temp[:, 0] = Y_proba
@@ -145,8 +145,10 @@ def find_best_thresholds(Y_true, Y_proba, precision_thresholds=None, target_name
     n_classes = Y_true.shape[1]
     if target_names is None: target_names = list(range(n_classes))
 
-    if isinstance(precision_thresholds, float): precision_thresholds = np.full((1, n_classes), precision_thresholds)
-    if precision_thresholds is not None and precision_thresholds.ndim == 1: precision_thresholds = precision_thresholds.T
+    if precision_thresholds is not None:
+        if isinstance(precision_thresholds, float): precision_thresholds = np.full((1, n_classes), precision_thresholds)
+        elif precision_thresholds.ndim == 1: precision_thresholds = precision_thresholds.T
+    #end if
 
     assert Y_true.shape[0] == Y_proba.shape[0]
     assert Y_true.shape[1] == Y_proba.shape[1]
