@@ -2,9 +2,11 @@ import logging
 
 import numpy as np
 
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import precision_recall_fscore_support
+from sklearn.preprocessing import label_binarize
 
 from tabulate import tabulate
 
@@ -14,20 +16,27 @@ logger = logging.getLogger(__name__)
 
 
 def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, thresholds=None, precision_thresholds=None):
-    if Y_proba.ndim == 1 or Y_proba.shape[1] == 1:
-        temp = np.zeros((Y_proba.shape[0], 2))
-        temp[:, 0] = Y_proba
-        temp[:, 1] = 1.0 - Y_proba
-        Y_proba = temp
-        assert not (target_names and len(target_names) != 2)
-    #end if
+    if Y_true.ndim == 1 or Y_true.shape[1] == 1:  # have to be multiclass or binary
+        Y_true_max = Y_true.max()
+        assert Y_true_max == int(Y_true_max)
 
-    if Y_true.ndim == 1 or Y_true.shape[1] == 1:
-        temp = np.zeros((Y_true.shape[0], 2))
-        temp[:, 0] = Y_true
-        temp[:, 1] = 1 - Y_true
-        Y_true = temp
-        assert not (target_names and len(target_names) != 2)
+        if Y_true_max == 1:  # binary!
+            temp = np.zeros((Y_true.shape[0], 2))
+            temp[:, 0] = Y_true
+            temp[:, 1] = 1.0 - Y_true
+            Y_true = temp
+        else:  # multiclass
+            Y_true = label_binarize(Y_true, classes=range(int(Y_true_max) + 1))
+        #end if
+        assert target_names is None or len(target_names) == Y_true.shape[1]
+
+        if Y_proba.ndim == 1 or Y_proba.shape[1] == 1:
+            assert Y_true.shape[1] == 2
+            temp = np.zeros((Y_proba.shape[0], 2))
+            temp[:, 0] = Y_proba
+            temp[:, 1] = 1.0 - Y_proba
+            Y_proba = temp
+        #end if
     #end if
 
     n_classes = Y_true.shape[1]
@@ -39,11 +48,10 @@ def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, th
         n_classes = Y_true.shape[1]
     #end if
 
-    if isinstance(thresholds, float): thresholds = np.full((1, n_classes), thresholds)
-    if thresholds is not None and thresholds.ndim == 1: thresholds = thresholds.reshape(1, n_classes)
-
-    if isinstance(precision_thresholds, float): precision_thresholds = np.full((1, n_classes), precision_thresholds)
-    if precision_thresholds is not None and precision_thresholds.ndim == 1: precision_thresholds = precision_thresholds.reshape(1, n_classes)
+    if isinstance(thresholds, float): thresholds = np.full(n_classes, thresholds)
+    if n_classes == 2: thresholds[1] = 1.0 - thresholds[0]
+    assert (thresholds <= 1).all() and (thresholds >= 0.0).all()
+    if isinstance(precision_thresholds, float): precision_thresholds = np.full(n_classes, precision_thresholds)
 
     assert Y_true.shape[0] == Y_proba.shape[0]
     assert Y_true.shape[1] == Y_proba.shape[1]
@@ -51,8 +59,8 @@ def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, th
 
     table = []
     support_total, ap_score_total = 0.0, 0.0
-    thresholds_best = np.zeros((1, n_classes))
-    thresholds_minprec = np.zeros((1, n_classes))
+    thresholds_best = np.zeros(n_classes)
+    thresholds_minprec = np.zeros(n_classes)
     for i, name in enumerate(target_names):
         # Results using 0.5 as threshold
         p, r, f1, _ = precision_recall_fscore_support(Y_true[:, i], Y_proba[:, i] >= 0.5, average='binary')  # Using thresholds
@@ -66,36 +74,48 @@ def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, th
 
         # Results using given thresholds
         if thresholds is not None:
-            p, r, f1, _ = precision_recall_fscore_support(Y_true[:, i], Y_proba[:, i] >= thresholds[0, i], average='binary')  # Using thresholds
-            row.append('{:.3f}: {:.3f}/{:.3f}/{:.3f}'.format(thresholds[0, i], p, r, f1))
-            # print(i, thresholds[0, i], (Y_proba[:, i] >= thresholds[0, i]).astype(int))
+            p, r, f1, _ = precision_recall_fscore_support(Y_true[:, i], Y_proba[:, i] >= thresholds[i], average='binary')  # Using thresholds
+            row.append('{:.3f}: {:.3f}/{:.3f}/{:.3f}'.format(thresholds[i], p, r, f1))
+            # print(i, thresholds[i], (Y_proba[:, i] >= thresholds[i]).astype(int))
         #end if
 
         # Results using optimal threshold
-        p, r, t = precision_recall_curve(Y_true[:, i], Y_proba[:, i])
-        f1 = np.nan_to_num((2 * p * r) / (p + r + 1e-8))
-        best_f1_i = np.argmax(f1)
-        thresholds_best[0, i] = t[best_f1_i]
-        # thresholds_best[0, i] = 0.5 if np.isclose(t[best_f1_i], 0.0) else t[best_f1_i]
-        row.append('{:.3f}: {:.3f}/{:.3f}/{:.3f}'.format(thresholds_best[0, i], p[best_f1_i], r[best_f1_i], f1[best_f1_i]))
-        # print(i, thresholds_best[0, i], (Y_proba[:, i] >= thresholds_best[0, i]).astype(int))
+        if n_classes == 2 and i == 1:
+            thresholds_best[i] = 1.0 - thresholds_best[0]
+            p, r, f1, _ = precision_recall_fscore_support(Y_true[:, i], Y_proba[:, i] >= thresholds_best[i], average='binary')
+            row.append('{:.3f}: {:.3f}/{:.3f}/{:.3f}'.format(thresholds_best[i], p, r, f1))
+        else:
+            p, r, t = precision_recall_curve(Y_true[:, i], Y_proba[:, i])
+            f1 = np.nan_to_num((2 * p * r) / (p + r + 1e-8))
+            best_f1_i = np.argmax(f1)
+            thresholds_best[i] = t[best_f1_i]
+            # thresholds_best[i] = 0.5 if np.isclose(t[best_f1_i], 0.0) else t[best_f1_i]
+            row.append('{:.3f}: {:.3f}/{:.3f}/{:.3f}'.format(thresholds_best[i], p[best_f1_i], r[best_f1_i], f1[best_f1_i]))
+            # print(i, thresholds_best[i], (Y_proba[:, i] >= thresholds_best[i]).astype(int))
+        #end if
 
         # Results using optimal threshold for precision > precision_threshold
         if precision_thresholds is not None:
-            try:
-                best_f1_i = max(filter(lambda k: p[k] >= precision_thresholds[0, i], range(p.shape[0])), key=lambda k: f1[k])
-                if best_f1_i == p.shape[0] - 1 or f1[best_f1_i] == 0.0: raise ValueError()
+            if n_classes == 2 and i == 1:
+                thresholds_minprec[i] = 1.0 - thresholds_minprec[0]
+                p, r, f1, _ = precision_recall_fscore_support(Y_true[:, i], Y_proba[:, i] >= thresholds_minprec[i], average='binary')
+                row.append('{:.3f}: {:.3f}/{:.3f}/{:.3f}'.format(thresholds_minprec[i], p, r, f1))
 
-                thresholds_minprec[0, i] = t[best_f1_i]
-                # thresholds_minprec[0, i] = 0.5 if np.isclose(t[best_f1_i], 0.0) else t[best_f1_i]
-                row.append('{:.3f}: {:.3f}/{:.3f}/{:.3f}'.format(thresholds_minprec[0, i], p[best_f1_i], r[best_f1_i], f1[best_f1_i]))
-                # print(i, precision_thresholds[0, i], (Y_proba[:, i] >= precision_thresholds[0, i]).astype(int))
+            else:
+                try:
+                    best_f1_i = max(filter(lambda k: p[k] >= precision_thresholds[i], range(p.shape[0])), key=lambda k: f1[k])
+                    if best_f1_i == p.shape[0] - 1 or f1[best_f1_i] == 0.0: raise ValueError()
 
-            except ValueError:
-                best_f1_i = np.argmax(f1)
-                logger.warn('Unable to find threshold for label "{}" where precision >= {}.'.format(target_names[i], precision_thresholds[0, i], t[best_f1_i]))
-                row.append('-')
-            #end try
+                    thresholds_minprec[i] = t[best_f1_i]
+                    # thresholds_minprec[i] = 0.5 if np.isclose(t[best_f1_i], 0.0) else t[best_f1_i]
+                    row.append('{:.3f}: {:.3f}/{:.3f}/{:.3f}'.format(thresholds_minprec[i], p[best_f1_i], r[best_f1_i], f1[best_f1_i]))
+                    # print(i, precision_thresholds[i], (Y_proba[:, i] >= precision_thresholds[i]).astype(int))
+
+                except ValueError:
+                    best_f1_i = np.argmax(f1)
+                    logger.warn('Unable to find threshold for label "{}" where precision >= {}.'.format(target_names[i], precision_thresholds[i], t[best_f1_i]))
+                    row.append('-')
+                #end try
         #end if
 
         table.append(row)
@@ -117,8 +137,13 @@ def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, th
         micro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds_best, average='micro')))
         if precision_thresholds is not None: micro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds_minprec, average='micro')))
 
-        table += [macro_averages, micro_averages]
-        table.insert(-2, ['-' * max(len(row[i]) for row in table + [headers]) for i in range(len(macro_averages))])
+        perfect_set = ['Perfect set', str(Y_true.shape[0]), '-', '{:.3f}'.format(accuracy_score(Y_true, Y_proba >= 0.5))]
+        if thresholds is not None: perfect_set.append('{:.3f}'.format(accuracy_score(Y_true, Y_proba >= thresholds)))
+        perfect_set.append('{:.3f}'.format(accuracy_score(Y_true, Y_proba >= thresholds_best)))
+        if precision_thresholds is not None: perfect_set.append('{:.3f}'.format(accuracy_score(Y_true, Y_proba >= thresholds_minprec)))
+
+        table += [perfect_set, macro_averages, micro_averages]
+        table.insert(-3, ['-' * max(len(row[i]) for row in table + [headers]) for i in range(len(macro_averages))])
     #end if
 
     return tabulate(table, headers=headers, tablefmt='psql') + '\n{} labels, {} instances, {} instance-labels'.format(n_classes, Y_true.shape[0], int(support_total))
@@ -146,7 +171,7 @@ def find_best_thresholds(Y_true, Y_proba, *, precision_thresholds=None, target_n
     if target_names is None: target_names = list(range(n_classes))
 
     if precision_thresholds is not None:
-        if isinstance(precision_thresholds, float): precision_thresholds = np.full((1, n_classes), precision_thresholds)
+        if isinstance(precision_thresholds, float): precision_thresholds = np.full(n_classes, precision_thresholds)
         elif precision_thresholds.ndim == 1: precision_thresholds = precision_thresholds.T
     #end if
 
@@ -164,12 +189,12 @@ def find_best_thresholds(Y_true, Y_proba, *, precision_thresholds=None, target_n
         # Results using optimal threshold for precision > precision_threshold
         if precision_thresholds is not None:
             try:
-                best_f1_i = max(filter(lambda k: p[k] >= precision_thresholds[0, i], range(p.shape[0])), key=lambda k: f1[k])
+                best_f1_i = max(filter(lambda k: p[k] >= precision_thresholds[i], range(p.shape[0])), key=lambda k: f1[k])
                 if best_f1_i == p.shape[0] - 1 or f1[best_f1_i] == 0.0: raise ValueError()
 
             except ValueError:
                 best_f1_i = np.argmax(f1)
-                logger.warn('Unable to find threshold for label "{}" where precision >= {}. Defaulting to best threshold of {}.'.format(target_names[i], precision_thresholds[0, i], t[best_f1_i]))
+                logger.warn('Unable to find threshold for label "{}" where precision >= {}. Defaulting to best threshold of {}.'.format(target_names[i], precision_thresholds[i], t[best_f1_i]))
             #end try
 
             thresholds[i] = t[best_f1_i]

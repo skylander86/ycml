@@ -82,6 +82,7 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
         if rescale: Y_predict = Y_proba >= 0.5
         else:
             Y_predict = np.zeros(Y_proba.shape, dtype=np.bool)
+            if thresholds is None: thresholds = np.full(Y_proba.shape[1], 0.5)
             for i in range(Y_proba.shape[0]):
                 Y_predict[i, :] = Y_proba[i, :] >= thresholds
         #end def

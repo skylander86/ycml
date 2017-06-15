@@ -23,7 +23,6 @@ class LabelsClassifier(BaseClassifier):
 
     def _fit(self, X, Y_labels, *, binarize_args={}, fit_args={}, **kwargs):
         Y_binarized = self.binarize_labels(Y_labels, **binarize_args)
-
         return self.fit_binarized(X, Y_binarized, **fit_args)
     #end def
 
@@ -66,10 +65,11 @@ class LabelsClassifier(BaseClassifier):
 
 
 class BinaryLabelsClassifier(LabelsClassifier):
-    def __init__(self, pos_label=None, **kwargs):
+    def __init__(self, pos_label, *, not_pos_label=None, **kwargs):
         super(BinaryLabelsClassifier, self).__init__(**kwargs)
 
         self.pos_label = pos_label
+        self.not_pos_label = 'not ' + pos_label if not_pos_label is None else not_pos_label
     #end def
 
     def predict_and_proba(self, *args, **kwargs):
@@ -82,37 +82,27 @@ class BinaryLabelsClassifier(LabelsClassifier):
         return Y_proba, Y_predict
     #end def
 
-    def binarize_labels(self, Y_labels, *, pos_label=None):
+    def binarize_labels(self, Y_labels):
         if Y_labels.shape[0] == 0:
             return np.zeros((0, 1))
 
-        if pos_label is None:
-            pos_label = self.pos_label
-
-        not_pos_label = 'not {}'.format(pos_label)
-        Y_labels_pos = [pos_label if pos_label in Y_labels[i] else not_pos_label for i in range(Y_labels.shape[0])]
-        Y_binarized = label_binarize(Y_labels_pos, classes=[pos_label, not_pos_label]).reshape(Y_labels.shape[0])
+        Y_labels_pos = [self.pos_label if self.pos_label in Y_labels[i] else self.not_pos_label for i in range(Y_labels.shape[0])]
+        Y_binarized = label_binarize(Y_labels_pos, classes=[self.pos_label, self.not_pos_label]).reshape(Y_labels.shape[0])
 
         return Y_binarized
     #end def
 
-    def binarize_dicts(self, Y_dicts, *, pos_label=None, default=0.0):
-        if pos_label is None:
-            pos_label = self.pos_label
-
-        return np.array([Y_dicts[i].get(pos_label, default) for i in range(Y_dicts.shape[0])])
+    def binarize_dicts(self, Y_dicts, *, default=0.0):
+        return np.array([Y_dicts[i].get(self.pos_label, default) for i in range(Y_dicts.shape[0])])
     #end def
 
-    def unbinarize_labels(self, Y_binarized, *, pos_label=None, epsilon=0.0):
-        if pos_label is None:
-            pos_label = self.pos_label
-
-        return np.array([[pos_label] if Y_binarized[i] > epsilon else [] for i in range(Y_binarized.shape[0])], dtype=np.object)
+    def unbinarize_labels(self, Y_binarized, *, epsilon=0.0):
+        return np.array([[self.pos_label] if Y_binarized[i] > epsilon else [] for i in range(Y_binarized.shape[0])], dtype=np.object)
     #end def
 
     @property
     def classes_(self):
-        return [self.pos_label]
+        return [self.pos_label, self.not_pos_label]
 #end def
 
 
@@ -131,7 +121,7 @@ class MulticlassLabelsClassifier(LabelsClassifier):
 
         if not len(self.classes_): raise ValueError('There are no labels available for fitting model.')
 
-        return super(MulticlassLabelsClassifier, self)._fit(X, Y_labels, binarize_args, fit_args)
+        return super(MulticlassLabelsClassifier, self)._fit(X, Y_labels, binarize_args=binarize_args, fit_args=fit_args, **kwargs)
     #end def
 
     def predict_and_proba(self, X_featurized, *, binarized=True, **kwargs):
@@ -219,7 +209,7 @@ class MultiLabelsClassifier(LabelsClassifier):
 
         if not len(self.classes_): raise ValueError('There are no labels available for fitting model.')
 
-        return super(MultiLabelsClassifier, self)._fit(X, Y_labels, binarize_args, fit_args)
+        return super(MultiLabelsClassifier, self)._fit(X, Y_labels, binarize_args=binarize_args, fit_args=fit_args, **kwargs)
     #end def
 
     def binarize_labels(self, Y_labels):
