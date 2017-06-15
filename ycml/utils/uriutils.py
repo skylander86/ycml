@@ -73,7 +73,7 @@ def uri_open(uri, mode='rb', encoding='utf-8', use_gzip='auto', io_args={}, urif
 
 
 @contextmanager
-def uri_to_tempfile(uri, delete=True, **kwargs):
+def uri_to_tempfile(uri, *, delete=True, **kwargs):
     with uri_open(uri, mode='rb', use_gzip=False) as f_uri:
         with NamedTemporaryFile(mode='wb', prefix='uri.', delete=False) as f_temp:
             copyfileobj(f_uri, f_temp)
@@ -98,7 +98,7 @@ def uri_read(uri, mode='rb', encoding='utf-8', use_gzip='auto', io_args={}, urif
 #end def
 
 
-def uri_dump(uri, content, *, mode='wb', encoding='utf-8', use_gzip='auto', io_args={}, urifs_args={}):
+def uri_dump(uri, content, mode='wb', encoding='utf-8', use_gzip='auto', io_args={}, urifs_args={}):
     with uri_open(uri, mode=mode, encoding=encoding, use_gzip=use_gzip, io_args=io_args, urifs_args=urifs_args) as f:
         f.write(content)
 #end def
