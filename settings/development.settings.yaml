@@ -4,15 +4,10 @@ n_jobs: 1
 
 featurizer_type: helloworld.featurizers.HelloWorldFeaturizer
 featurizer_parameters:
+  feature_dims: 10
 
-# classifier_type: HelloWorldBinaryLabelsClassifier
-# classifier_parameters:
-#   pos_label: apple
-
-# classifier_type: HelloWorldMultiLabelsClassifier
-# classifier_parameters:
-#   include: [apple, cherry]
-
-classifier_type: helloworld.classifiers.HelloWorldMulticlassClassifier
+classifier_type: helloworld.classifiers.HelloWorldBinaryLabelsClassifier
+# classifier_type: helloworld.classifiers.HelloWorldMultiLabelsClassifier
+# classifier_type: helloworld.classifiers.HelloWorldMulticlassClassifier
 classifier_parameters:
-  # include: [apple, cherry]
+  pos_label: apple
