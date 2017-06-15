@@ -44,8 +44,8 @@ def main():
     evaluate_parser.add_argument('--load-probabilities', type=URIFileType('rb'), metavar='<probabilities_file>', help='Load probabilities from here instead of recalculating.')
     evaluate_parser.add_argument('--save-probabilities', type=URIFileType('wb'), metavar='<probabilities_file>', help='Save evaluation probabilities; useful for calibration.')
     evaluate_parser.add_argument('--min-precision', type=float, metavar='<precision>', default=0.75, help='Set the minimum precision threshold.')
-    evaluate_parser.add_argument('--best-thresholds', type=URIFileType('wb'), metavar='<thresholds_file>', help='Save best F1 threshold values here.')
-    evaluate_parser.add_argument('--minprec-thresholds', type=URIFileType('wb'), metavar='<thresholds_file>', help='Save minimum precision best F1 threshold values here.')
+    evaluate_parser.add_argument('--best-thresholds', type=URIFileType('w'), metavar='<thresholds_file>', help='Save best F1 threshold values here.')
+    evaluate_parser.add_argument('--minprec-thresholds', type=URIFileType('w'), metavar='<thresholds_file>', help='Save minimum precision best F1 threshold values here.')
     evaluate_parser.add_argument('--pr-curves', type=str, metavar='<folder>', help='Save precision-recall curves in this folder.')
 
     predict_parser = subparsers.add_parser('predict', help='Predict using a classifier.')
@@ -120,13 +120,13 @@ def main():
 
         if A.best_thresholds:
             best_thresholds = find_best_thresholds(Y_true_binarized, Y_proba, target_names=labels)
-            o = dict((c, best_thresholds[i]) for i, c in enumerate(labels))
+            o = dict((c, float(best_thresholds[i])) for i, c in enumerate(labels))
             save_dictionary_to_file(A.best_thresholds, o, title='thresholds')
         #end if
 
         if A.minprec_thresholds:
             minprec_thresholds = find_best_thresholds(Y_true_binarized, Y_proba, precision_thresholds=A.min_precision, target_names=labels)
-            o = dict((c, minprec_thresholds[i]) for i, c in enumerate(labels))
+            o = dict((c, float(minprec_thresholds[i])) for i, c in enumerate(labels))
             save_dictionary_to_file(A.minprec_thresholds, o, title='thresholds')
         #end if
 
