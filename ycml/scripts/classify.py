@@ -14,8 +14,9 @@ from tabulate import tabulate
 
 from ..classifiers import load_classifier, get_thresholds_from_file
 from ..featurizers import load_featurized, save_featurized
-from ..utils import classification_report
-from ..utils import shuffle_instances, load_dictionary_from_file, get_settings, URIFileType
+from ..utils import classification_report, find_best_thresholds
+from ..utils import shuffle_instances, get_settings, URIFileType
+from ..utils import load_dictionary_from_file, save_dictionary_to_file
 
 __all__ = []
 
@@ -37,11 +38,11 @@ def main():
     fit_parser.add_argument('-o', '--output', type=URIFileType('wb'), metavar='<classifier_file>', required=True, help='Save trained classifier model here.')
 
     evaluate_parser = subparsers.add_parser('evaluate', help='Evaluate a classifier.')
-    evaluate_parser.add_argument('classifier_file', type=URIFileType(), metavar='<classifier_file>', help='Model file to use for evaluation.')
-    evaluate_parser.add_argument('featurized_file', type=URIFileType(), metavar='<featurized_file>', help='Evaluate model on featurized instances.')
+    evaluate_parser.add_argument('-c', '--classifier', type=URIFileType(), metavar='<classifier_file>', default=None, help='Classifier file to use for evaluation.')
+    evaluate_parser.add_argument('-f', '--featurized', type=URIFileType(), metavar='<featurized_file>', default=None, help='Featurized instances for evaluation.')
     evaluate_parser.add_argument('-t', '--thresholds', type=URIFileType(), metavar='<thresholds>', required=False, help='Threshold file to use for prediction.')
-    evaluate_parser.add_argument('-P', '--load-probabilities', type=URIFileType('rb'), metavar='<probabilities_file>', required=False, help='Load probabilities from here instead of recalculating.')
-    evaluate_parser.add_argument('-p', '--save-probabilities', type=URIFileType('wb'), metavar='<probabilities_file>', required=False, help='Save evaluation probabilities; useful for calibration.')
+    evaluate_parser.add_argument('--load-probabilities', type=URIFileType('rb'), metavar='<probabilities_file>', required=False, help='Load probabilities from here instead of recalculating.')
+    evaluate_parser.add_argument('--save-probabilities', type=URIFileType('wb'), metavar='<probabilities_file>', required=False, help='Save evaluation probabilities; useful for calibration.')
     evaluate_parser.add_argument('--best-thresholds', type=URIFileType('wb'), metavar='<thresholds_file>', required=False, help='Save best F1 threshold values here.')
     evaluate_parser.add_argument('--minprec-thresholds', type=URIFileType('wb'), metavar='<thresholds_file>', required=False, help='Save minimum precision best F1 threshold values here.')
     evaluate_parser.add_argument('--pr-curves', type=str, metavar='<folder>', required=False, help='Save precision-recall curves in this folder.')
@@ -84,24 +85,42 @@ def main():
         classifier.save(A.output)
 
     elif A.mode == 'evaluate':
-        classifier = load_classifier(A.classifier_file)
 
         thresholds = None
-        if A.thresholds:
-            thresholds = get_thresholds_from_file(A.thresholds, classifier.classes_)
 
-        X_featurized, Y_labels, featurizer_uuid = load_featurized(A.featurized_file, keys=('X_featurized', 'Y_labels', 'featurizer_uuid'))
-        Y_proba, _ = classifier.predict_and_proba(X_featurized, thresholds=thresholds, binarized=True)
-        Y_true_binarized = classifier.binarize_labels(Y_labels)
+        if A.load_probabilities:
+            o = np.load(A.load_probabilities)
+            logger.info('Loaded probabalities from <{}>.'.format(A.load_probabilities.name))
 
-        N = X_featurized.shape[0]
-        assert Y_true_binarized.shape[0] == N
+            Y_proba = o['Y_proba']
+            Y_true_binarized = o['Y_true_binarized']
+            thresholds = o['thresholds']
+            labels = o['labels']
 
-        logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_proba, target_names=classifier.classes_, thresholds=thresholds, precision_thresholds=0.75)))
+        else:
+            classifier = load_classifier(A.classifier)
+            labels = classifier.classes_
+            if A.thresholds: thresholds = get_thresholds_from_file(A.thresholds, labels)
+
+            X_featurized, Y_labels, featurizer_uuid = load_featurized(A.featurized, keys=('X_featurized', 'Y_labels', 'featurizer_uuid'))
+            Y_proba, _ = classifier.predict_and_proba(X_featurized, thresholds=thresholds, binarized=True)
+            Y_true_binarized = classifier.binarize_labels(Y_labels)
+
+            N = X_featurized.shape[0]
+            assert Y_true_binarized.shape[0] == N
+        #end if
+
+        logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_proba, target_names=labels, thresholds=thresholds, precision_thresholds=0.75)))
 
         if A.save_probabilities:
-            np.savez_compressed(A.save_probabilities, featurizer_uuid=featurizer_uuid, classifier_uuid=classifier.uuid_, Y_proba=Y_proba, Y_true_binarized=Y_true_binarized, thresholds=thresholds, labels=classifier.classes_)
+            np.savez_compressed(A.save_probabilities, featurizer_uuid=featurizer_uuid, classifier_uuid=classifier.uuid_, Y_proba=Y_proba, Y_true_binarized=Y_true_binarized, thresholds=thresholds, labels=labels)
             logger.info('Saved evaluation probabilities to <{}>.'.format(A.save_probabilities.name))
+        #end if
+
+        if A.best_thresholds:
+            best_thresholds = find_best_thresholds(Y_true_binarized, Y_proba, precision_thresholds=0.75, target_names=labels)
+            o = dict((c, best_thresholds[i]) for i, c in enumerate(labels))
+            save_dictionary_to_file(A.best_thresholds, o, title='thresholds')
         #end if
 
     elif A.mode == 'predict':
