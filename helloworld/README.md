@@ -38,18 +38,16 @@ The following featurizers are available:
 
 ### Step 2: Train/Evaluate model
 
-Fitting a classifier
+Fitting a classifier:
 
-    python -m ycml.scripts.classify --settings settings/development.settings.yaml fit -f data/train.features.npz -o models/development.classifier.gz
+    python -m ycml.scripts.train --settings settings/development.settings.yaml -f data/train.features.npz -o models/development.classifier.gz
 
-Evaluating a classifier
+Evaluating a classifier:
 
-    python -m ycml.scripts.classify --settings settings/development.settings.yaml evaluate -c models/development.classifier.gz -f data/evaluate.features.npz
+    python -m ycml.scripts.evaluate --settings settings/development.settings.yaml -c models/development.classifier.gz -f data/evaluate.features.npz
 
 There are various options to save threshold values to file, save and load probabilities from file, and generate PR curves for analysis.
 
-    python -m ycml.scripts.classify --settings settings/development.settings.yaml evaluate -c models/development.classifier.gz -f data/evaluate.features.npz
+Making predictions:
 
-Making predictions
-
-    python -m ycml.scripts.classify --settings settings/development.settings.yaml predict models/development.classifier.gz data/evaluate.features.npz --format yaml
+    python -m ycml.scripts.predict --settings settings/development.settings.yaml models/development.classifier.gz data/evaluate.features.npz --format yaml
