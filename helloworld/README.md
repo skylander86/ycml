@@ -31,11 +31,10 @@ Example:
     python -m ycml.scripts.featurize --settings settings/development.settings.yaml -i ./data/evaluate.json.gz --featurize models/development.featurizer.gz -o data/evaluate.features.npz
 
 You can set parameters for the featurizer through the settings file directly (or use the default).
-We store existing settings file in [`settings/`](../settings/) using the naming convention of `<environment>.settings.yaml`, where settings for multiple apps are stored in a single YAML file.
 
 The following featurizers are available:
 
-- `HelloWorld`: Description here
+- `helloworld.featurizers.HelloWorldFeaturizer`: Generates a bunch of random features.
 
 ### Step 2: Train/Evaluate model
 
@@ -45,7 +44,11 @@ Fitting a classifier
 
 Evaluating a classifier
 
-    python -m ycml.scripts.classify --settings settings/development.settings.yaml evaluate models/development.classifier.gz data/evaluate.features.npz --save-probabilities data/evaluate.evaluation_probabilities.npz
+    python -m ycml.scripts.classify --settings settings/development.settings.yaml evaluate -c models/development.classifier.gz -f data/evaluate.features.npz
+
+There are various options to save threshold values to file, save and load probabilities from file, and generate PR curves for analysis.
+
+    python -m ycml.scripts.classify --settings settings/development.settings.yaml evaluate -c models/development.classifier.gz -f data/evaluate.features.npz
 
 Making predictions
 

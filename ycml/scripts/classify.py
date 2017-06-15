@@ -14,8 +14,8 @@ from tabulate import tabulate
 
 from ..classifiers import load_classifier, get_thresholds_from_file
 from ..featurizers import load_featurized, save_featurized
-from ..utils import classification_report, find_best_thresholds
-from ..utils import shuffle_instances, get_settings, URIFileType
+from ..utils import classification_report, find_best_thresholds, generate_pr_curves
+from ..utils import shuffle_instances, get_settings, URIFileType, URIType
 from ..utils import load_dictionary_from_file, save_dictionary_to_file
 
 __all__ = []
@@ -46,7 +46,7 @@ def main():
     evaluate_parser.add_argument('--min-precision', type=float, metavar='<precision>', default=0.75, help='Set the minimum precision threshold.')
     evaluate_parser.add_argument('--best-thresholds', type=URIFileType('w'), metavar='<thresholds_file>', help='Save best F1 threshold values here.')
     evaluate_parser.add_argument('--minprec-thresholds', type=URIFileType('w'), metavar='<thresholds_file>', help='Save minimum precision best F1 threshold values here.')
-    evaluate_parser.add_argument('--pr-curves', type=str, metavar='<folder>', help='Save precision-recall curves in this folder.')
+    evaluate_parser.add_argument('--pr-curves', type=URIType(), metavar='<folder>', help='Save precision-recall curves in this folder.')
 
     predict_parser = subparsers.add_parser('predict', help='Predict using a classifier.')
     predict_parser.add_argument('classifier_file', type=URIFileType(), metavar='<classifier_file>', help='Model file to use for prediction.')
@@ -128,6 +128,10 @@ def main():
             minprec_thresholds = find_best_thresholds(Y_true_binarized, Y_proba, precision_thresholds=A.min_precision, target_names=labels)
             o = dict((c, float(minprec_thresholds[i])) for i, c in enumerate(labels))
             save_dictionary_to_file(A.minprec_thresholds, o, title='thresholds')
+        #end if
+
+        if A.pr_curves:
+            generate_pr_curves(Y_true_binarized, Y_proba, A.pr_curves.geturl(), target_names=labels, thresholds=thresholds, precision_thresholds=A.min_precision)
         #end if
 
     elif A.mode == 'predict':

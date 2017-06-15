@@ -1,4 +1,7 @@
 import logging
+import os
+
+import matplotlib.pyplot as plt
 
 import numpy as np
 
@@ -10,22 +13,17 @@ from sklearn.preprocessing import label_binarize
 
 from tabulate import tabulate
 
-__all__ = ['classification_report', 'find_best_thresholds']
+from .uriutils import uri_open
+
+__all__ = ['classification_report', 'find_best_thresholds', 'generate_pr_curves']
 
 logger = logging.getLogger(__name__)
 
 
 def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, thresholds=None, precision_thresholds=None):
     Y_true, Y_proba = _make_label_indicator(Y_true, Y_proba)
-
+    Y_true, Y_proba, target_names = _filter_labels(Y_true, Y_proba, labels, target_names)
     n_classes = Y_true.shape[1]
-    if target_names is None: target_names = list(range(n_classes))
-
-    if labels:  # delete columns that we don't need
-        Y_true, Y_proba = Y_true[:, labels], Y_proba[:, labels]
-        target_names = [target_names[j] for j in labels]
-        n_classes = Y_true.shape[1]
-    #end if
 
     if isinstance(thresholds, float): thresholds = np.full(n_classes, thresholds)
     if thresholds is not None and n_classes == 2: thresholds[1] = 1.0 - thresholds[0]
@@ -131,15 +129,12 @@ def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, th
 #end def
 
 
-def find_best_thresholds(Y_true, Y_proba, *, precision_thresholds=None, target_names=None):
+def find_best_thresholds(Y_true, Y_proba, *, labels=None, target_names=None, precision_thresholds=None):
     Y_true, Y_proba = _make_label_indicator(Y_true, Y_proba)
-
+    Y_true, Y_proba, target_names = _filter_labels(Y_true, Y_proba, labels, target_names)
     n_classes = Y_true.shape[1]
-    if target_names is None: target_names = list(range(n_classes))
 
-    if precision_thresholds is not None:
-        if isinstance(precision_thresholds, float): precision_thresholds = np.full(n_classes, precision_thresholds)
-    #end if
+    if precision_thresholds is not None and isinstance(precision_thresholds, float): precision_thresholds = np.full(n_classes, precision_thresholds)
 
     assert Y_true.shape[0] == Y_proba.shape[0]
     assert Y_true.shape[1] == Y_proba.shape[1]
@@ -177,6 +172,77 @@ def find_best_thresholds(Y_true, Y_proba, *, precision_thresholds=None, target_n
 #end def
 
 
+def generate_pr_curves(Y_true, Y_proba, output_prefix, *, labels=None, target_names=None, thresholds=None, precision_thresholds=None):
+    Y_true, Y_proba = _make_label_indicator(Y_true, Y_proba)
+    Y_true, Y_proba, target_names = _filter_labels(Y_true, Y_proba, labels, target_names)
+    n_classes = Y_true.shape[1]
+
+    if isinstance(thresholds, float): thresholds = np.full(n_classes, thresholds)
+    if thresholds is not None and n_classes == 2: thresholds[1] = 1.0 - thresholds[0]
+    assert thresholds is None or ((thresholds <= 1).all() and (thresholds >= 0.0).all())
+
+    if isinstance(precision_thresholds, float): precision_thresholds = np.full(n_classes, precision_thresholds)
+    assert precision_thresholds is None or ((precision_thresholds <= 1).all() and (precision_thresholds >= 0.0).all())
+
+    thresholds_best = np.zeros(n_classes)
+    thresholds_minprec = np.zeros(n_classes)
+    for i, name in enumerate(target_names):
+        precision, recall, thresholds_ = precision_recall_curve(Y_true[:, i], Y_proba[:, i])
+        f1 = np.nan_to_num((2 * precision * recall) / (precision + recall + 1e-8))
+        ap_score = average_precision_score(Y_true[:, i], Y_proba[:, i])
+
+        fig, ax = plt.subplots()
+        ax.plot(recall, precision, label='Precision-Recall (AP={:.3f})'.format(ap_score))
+        ax.set_ylabel('Precision')
+        ax.set_xlabel('Recall')
+        ax.set_ylim([0.0, 1.0])
+        ax.set_xlim([0.0, 1.0])
+        ax.set_title('Precision-Recall Curve for "{}"'.format(name))
+
+        if thresholds is not None:  # Results using given thresholds
+            p, r, f1_score, _ = precision_recall_fscore_support(Y_true[:, i], Y_proba[:, i] >= thresholds[i], average='binary')  # Using thresholds
+            ax.plot([r], [p], marker='x', label='File T={:.3f}; F1={:.3f}'.format(thresholds[i], f1_score))
+        #end if
+
+        if n_classes == 2 and i == 1:  # Results using optimal threshold
+            thresholds_best[i] = 1.0 - thresholds_best[0]
+            p, r, f1_score, _ = precision_recall_fscore_support(Y_true[:, i], Y_proba[:, i] >= thresholds_best[i], average='binary')
+        else:
+            best_f1_i = np.argmax(f1)
+            p, r, f1_score, thresholds_best[i] = precision[best_f1_i], recall[best_f1_i], f1[best_f1_i], thresholds_[best_f1_i]
+        #end if
+        ax.plot([r], [p], marker='x', label='Best T={:.3f}; F1={:.3f}'.format(thresholds_best[i], f1_score))
+
+        if precision_thresholds is not None:  # Results using optimal threshold for precision > precision_threshold
+            if n_classes == 2 and i == 1:
+                thresholds_minprec[i] = 1.0 - thresholds_minprec[0]
+                p, r, f1_score, _ = precision_recall_fscore_support(Y_true[:, i], Y_proba[:, i] >= thresholds_minprec[i], average='binary')
+
+            else:
+                try:
+                    best_f1_i = max(filter(lambda k: precision[k] >= precision_thresholds[i], range(precision.shape[0])), key=lambda k: f1[k])
+                    if best_f1_i == precision.shape[0] - 1 or f1[best_f1_i] == 0.0: raise ValueError()
+                    thresholds_minprec[i] = thresholds_[best_f1_i]
+
+                except ValueError:
+                    best_f1_i = np.argmax(f1)
+                    logger.warn('Unable to find threshold for label "{}" where precision >= {}.'.format(target_names[i], precision_thresholds[i], thresholds_[best_f1_i]))
+                #end try
+                p, r, f1_score, thresholds_minprec[i] = precision[best_f1_i], recall[best_f1_i], f1[best_f1_i], thresholds_[best_f1_i]
+            #end if
+            ax.plot([r], [p], marker='x', label='Minprec T={:.3f}; F1={:.3f}'.format(thresholds_minprec[i], f1_score))
+        #end if
+
+        ax.legend()
+        plt.tight_layout()
+        with uri_open(os.path.join(output_prefix, name + '.pdf'), 'wb') as f:
+            fig.savefig(f, format='pdf')
+            logger.info('Precision-Recall curve for "{}" saved to <{}>.'.format(name, f.name))
+        #end with
+    #end for
+#end def
+
+
 def _make_label_indicator(Y_true, Y_proba):
     if Y_true.ndim == 1 or Y_true.shape[1] == 1:  # have to be multiclass or binary
         Y_true_max = Y_true.max()
@@ -201,6 +267,18 @@ def _make_label_indicator(Y_true, Y_proba):
     #end if
 
     return Y_true, Y_proba
+#end def
+
+
+def _filter_labels(Y_true, Y_proba, labels, target_names):
+    if target_names is None: target_names = list(range(Y_true.shape[1]))
+
+    if labels:
+        Y_true, Y_proba = Y_true[:, labels], Y_proba[:, labels]
+        target_names = [target_names[j] for j in labels]
+    #end if
+
+    return Y_true, Y_proba, target_names
 #end def
 
 
