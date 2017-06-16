@@ -74,7 +74,7 @@ class KerasNNClassifierMixin(object):
         K.set_session(tf_session)
     #end def
 
-    def keras_fit(self, X, Y, *, nn_model=None, **kwargs):
+    def keras_fit(self, X, Y, *, nn_model=None, validation_data=None, **kwargs):
         if nn_model is None: nn_model = getattr(self, self.NN_MODEL_ATTRIBUTE)
 
         if self.initial_weights:
@@ -88,12 +88,10 @@ class KerasNNClassifierMixin(object):
             return History()
         #end if
 
-        validation_data = kwargs.pop('validation_data', None)
-
-        return nn_model.fit(X, Y, validation_data=validation_data, validation_split=self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), initial_epoch=self.initial_epoch, **kwargs)
+        return nn_model.fit(X, Y, validation_data=validation_data, validation_split=0.0 if validation_data is not None else self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), initial_epoch=self.initial_epoch, **kwargs)
     #end def
 
-    def keras_fit_generator(self, X, Y, *, nn_model=None, generator_func=None, **kwargs):
+    def keras_fit_generator(self, X, Y, *, nn_model=None, generator_func=None, validation_data=None, **kwargs):
         if nn_model is None: nn_model = getattr(self, self.NN_MODEL_ATTRIBUTE)
 
         if self.initial_weights:
@@ -107,7 +105,6 @@ class KerasNNClassifierMixin(object):
             return History()
         #end if
 
-        validation_data = kwargs.pop('validation_data', None)
         if validation_data is None:
             X_train, X_validation, Y_train, Y_validation = train_test_split(X, Y, test_size=self.validation_size)
             validation_data = (X_validation.todense() if sps.issparse(X_validation) else X_validation, Y_validation.todense() if sps.issparse(Y_validation) else Y_validation)
