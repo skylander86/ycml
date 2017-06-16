@@ -35,11 +35,12 @@ def main():
     classifier_parameters = get_settings((file_settings, 'classifier_parameters'), default={})
     classifier_parameters['n_jobs'] = get_settings(key='n_jobs', sources=(A, classifier_parameters, file_settings), default=1)
 
-    module_path, class_name = classifier_type.rsplit('.', 1)
+    try: module_path, class_name = classifier_type.rsplit('.', 1)
+    except ValueError: parser.error('{} is not a valid classifier. You need to specify the full Python dotted path to the classifier class.')
+
     module = import_module(module_path)
     classifier_class = getattr(module, class_name)
-
-    if not classifier_class: parser.error('Unknown model name "{}".'.format(classifier_type))
+    if not classifier_class: parser.error('Unknown classifier name "{}".'.format(classifier_type))
 
     X_featurized, Y_labels = load_featurized(A.featurized, keys=('X_featurized', 'Y_labels'))
 
