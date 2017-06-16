@@ -42,14 +42,12 @@ def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, th
     thresholds_minprec = np.zeros(n_classes)
     for i, name in enumerate(target_names):
         # Results using 0.5 as threshold
-        p, r, f1, _ = precision_recall_fscore_support(Y_true[:, i], Y_proba[:, i] >= 0.5, average='binary')  # Using thresholds
+        p, r, f1, _ = precision_recall_fscore_support(Y_true[:, i], (Y_proba[:, i] >= 0.5), average='binary')  # Using thresholds
         support = Y_true[:, i].sum()
         ap_score = average_precision_score(Y_true[:, i], Y_proba[:, i])
         row = [name, '{:d}'.format(int(support)), '{:.3f}'.format(ap_score), '{:.3f}/{:.3f}/{:.3f}'.format(p, r, f1)]
         support_total += support
         ap_score_total += ap_score
-
-        # print(i, 0.5, (Y_proba[:, i] >= 0.5).astype(int))
 
         # Results using given thresholds
         if thresholds is not None:

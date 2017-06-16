@@ -75,7 +75,7 @@ class BinaryLabelsClassifier(LabelsClassifier):
     def predict_and_proba(self, X_featurized, *, binarized=True, **kwargs):
         Y_proba, Y_predict = super(BinaryLabelsClassifier, self).predict_and_proba(X_featurized, binarized=binarized, **kwargs)
         if Y_proba.ndim == 1:
-            Y_proba_2d = np.zeros((Y_proba.shape[0], 2), dtype=Y_proba.dtype)
+            Y_proba_2d = np.zeros((Y_proba.shape[0], 2), dtype=np.float64)
             Y_proba_2d[:, 0] = Y_proba
             Y_proba_2d[:, 1] = 1.0 - Y_proba
             Y_proba = Y_proba_2d

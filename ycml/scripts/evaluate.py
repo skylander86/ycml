@@ -78,6 +78,7 @@ def main():
         if A.thresholds: thresholds = get_thresholds_from_file(A.thresholds, labels)
 
         X_featurized, Y_labels, featurizer_uuid = load_featurized(A.featurized, keys=('X_featurized', 'Y_labels', 'featurizer_uuid'))
+
         Y_proba, _ = classifier.predict_and_proba(X_featurized, thresholds=thresholds, binarized=True)
         Y_true_binarized = classifier.binarize_labels(Y_labels)
 
