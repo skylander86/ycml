@@ -22,6 +22,7 @@ setup(
     license='Apache Software License 2.0',
     packages=['ycml'],
     install_requires=[
+        'matplotlib>=2.0',
         'numpy>=1.12',
         'scipy>=0.19',
         'scikit-learn>=0.18',
