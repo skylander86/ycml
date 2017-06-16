@@ -101,8 +101,22 @@ class BinaryLabelsClassifier(LabelsClassifier):
         return np.array([Y_dicts[i].get(self.pos_label, default) for i in range(Y_dicts.shape[0])])
     #end def
 
-    def unbinarize_labels(self, Y_binarized, *, epsilon=0.0):
-        return np.array([[self.pos_label] if Y_binarized[i] > epsilon else [] for i in range(Y_binarized.shape[0])], dtype=np.object)
+    def unbinarize_labels(self, Y_proba, *, epsilon=0.0, to_dict=False):
+        unbinarized = np.empty(Y_proba.shape[0], dtype=np.object)
+        if len(Y_proba.shape) == 1:
+            for i in range(Y_proba.shape[0]):
+                if to_dict: unbinarized[i] = dict([(self.classes_[Y_proba[i]], float(Y_proba[i]))])
+                else: unbinarized[i] = [self.classes_[Y_proba[i]]]
+            #end for
+        else:
+            Y_argmax = np.argmax(Y_proba, axis=1)
+            for i in range(Y_proba.shape[0]):
+                if to_dict: unbinarized[i] = dict((self.classes_[j], float(Y_proba[i, j])) for j in range(Y_proba.shape[1]) if Y_proba[i, j] > epsilon)
+                else: unbinarized[i] = [self.classes_[Y_argmax[i]]]
+            #end for
+        #end if
+
+        return unbinarized
     #end def
 
     @property
@@ -179,13 +193,13 @@ class MulticlassLabelsClassifier(LabelsClassifier):
         unbinarized = np.empty(Y_proba.shape[0], dtype=np.object)
         if len(Y_proba.shape) == 1:
             for i in range(Y_proba.shape[0]):
-                if to_dict: unbinarized[i] = dict([(self.classes_[Y_proba[i]], Y_proba[i])])
+                if to_dict: unbinarized[i] = dict([(self.classes_[Y_proba[i]], float(Y_proba[i]))])
                 else: unbinarized[i] = [self.classes_[Y_proba[i]]]
             #end for
         else:
             Y_argmax = np.argmax(Y_proba, axis=1)
             for i in range(Y_proba.shape[0]):
-                if to_dict: unbinarized[i] = dict((self.classes_[j], Y_proba[i, j]) for j in range(Y_proba.shape[1]) if Y_proba[i, j] > epsilon)
+                if to_dict: unbinarized[i] = dict((self.classes_[j], float(Y_proba[i, j])) for j in range(Y_proba.shape[1]) if Y_proba[i, j] > epsilon)
                 else: unbinarized[i] = [self.classes_[Y_argmax[i]]]
             #end for
         #end if
@@ -242,7 +256,7 @@ class MultiLabelsClassifier(LabelsClassifier):
         assert len(self.classes_) == Y_proba.shape[1]
         unbinarized = np.empty(Y_proba.shape[0], dtype=np.object)
         for i in range(Y_proba.shape[0]):
-            if to_dict: unbinarized[i] = dict((self.classes_[j], Y_proba[i, j]) for j in range(Y_proba.shape[1]) if Y_proba[i, j] > epsilon)
+            if to_dict: unbinarized[i] = dict((self.classes_[j], float(Y_proba[i, j])) for j in range(Y_proba.shape[1]) if Y_proba[i, j] > epsilon)
             else: unbinarized[i] = [self.classes_[j] for j in range(Y_proba.shape[1]) if Y_proba[i, j] > epsilon]
         #end for
 
