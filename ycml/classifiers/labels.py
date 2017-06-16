@@ -220,7 +220,7 @@ class MulticlassLabelsClassifier(LabelsClassifier):
 
 
 class MultiLabelsClassifier(LabelsClassifier):
-    def __init__(self, n_jobs=1, include=[], exclude=[], **kwargs):
+    def __init__(self, include=[], exclude=[], **kwargs):
         super(MultiLabelsClassifier, self).__init__(**kwargs)
 
         self.exclude = set(exclude)
