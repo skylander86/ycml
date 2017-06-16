@@ -33,7 +33,7 @@ def main():
 
     classifier_type = get_settings(key='classifier_type', sources=(A, 'env', file_settings))
     classifier_parameters = get_settings((file_settings, 'classifier_parameters'), default={})
-    classifier_parameters['n_jobs'] = get_settings(key='n_jobs', sources=(A, classifier_parameters, file_settings), default=1)
+    classifier_parameters['n_jobs'] = get_settings(key='n_jobs', sources=(A, 'env', classifier_parameters, file_settings), default=1)
 
     try: module_path, class_name = classifier_type.rsplit('.', 1)
     except ValueError: parser.error('{} is not a valid classifier. You need to specify the full Python dotted path to the classifier class.')
