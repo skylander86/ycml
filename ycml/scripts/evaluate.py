@@ -31,7 +31,7 @@ def main():
     parser.add_argument('--load-probabilities', type=URIFileType('rb'), metavar='<probabilities_file>', help='Load probabilities from here instead of recalculating.')
 
     parser.add_argument('--save-probabilities', type=URIFileType('wb'), metavar='<probabilities_file>', help='Save evaluation probabilities; useful for calibration.')
-    parser.add_argument('--min-precision', type=float, metavar='<precision>', default=0.75, help='Set the minimum precision threshold.')
+    parser.add_argument('--min-precision', type=float, metavar='<precision>', default=None, help='Set the minimum precision threshold.')
     parser.add_argument('--best-thresholds', type=URIFileType('w'), metavar='<thresholds_file>', help='Save best F1 threshold values here.')
     parser.add_argument('--minprec-thresholds', type=URIFileType('w'), metavar='<thresholds_file>', help='Save minimum precision best F1 threshold values here.')
     parser.add_argument('--pr-curves', type=URIType(), metavar='<folder>', help='Save precision-recall curves in this folder.')
