@@ -280,7 +280,7 @@ class EarlyStopping(Callback):
     #end def
 
     def on_epoch_end(self, epoch, logs={}):
-        monitor_score = logs.get(self.monitor, 0.0)
+        monitor_score = logs[self.monitor]
         self.val_scores.append(monitor_score)
         if len(self.val_scores) < self.patience or epoch <= self.min_epoch or monitor_score < 0.2:  # hard limit
             return
