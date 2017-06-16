@@ -3,8 +3,7 @@ from importlib import import_module
 import logging
 
 from ..featurizers import load_featurized
-from ..utils import shuffle_instances, get_settings, URIFileType
-from ..utils import load_dictionary_from_file
+from ..utils import load_dictionary_from_file, get_settings, URIFileType
 
 __all__ = []
 
@@ -22,7 +21,6 @@ def main():
     parser.add_argument('-o', '--output', type=URIFileType('wb'), metavar='<classifier_file>', help='Save trained classifier model here.')
 
     parser.add_argument('-r', '--resume', type=str, metavar='<param>', nargs='+', help='Resume training from given file (takes multiple arguments depending on classifier).')
-    parser.add_argument('--shuffle', action='store_true', help='Shuffle instances before fitting.')
     parser.add_argument('-v', '--validation-data', type=URIFileType(), metavar='<featurized>', help='Use this as validation set instead of system defined one.')
 
     A = parser.parse_args()
@@ -44,7 +42,6 @@ def main():
     if not classifier_class: parser.error('Unknown model name "{}".'.format(classifier_type))
 
     X_featurized, Y_labels = load_featurized(A.featurized, keys=('X_featurized', 'Y_labels'))
-    if A.shuffle: X_featurized, Y_labels = shuffle_instances(X_featurized, Y_labels)
 
     fit_args = {}
     if A.validation_data:
