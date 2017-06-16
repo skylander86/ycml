@@ -109,7 +109,7 @@ def main():
     #end if
 
     if A.fit or A.featurize:
-        logger.debug('Feature matrix has dimensions {}x{} ({:,} active features).'.format(X_featurized.shape[0], X_featurized.shape[1], len(X_featurized.data)))
+        logger.debug('Feature matrix has dimensions {} ({:,} active features).'.format('x'.join(map(str, X_featurized.shape)), len(X_featurized.data)))
 
         if A.output:
             if A.shuffle:
