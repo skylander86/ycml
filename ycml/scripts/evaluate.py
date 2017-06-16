@@ -28,8 +28,8 @@ def main():
     parser.add_argument('-c', '--classifier', type=URIFileType(), metavar='<classifier_file>', help='Classifier file to use for evaluation.')
     parser.add_argument('-f', '--featurized', type=URIFileType(), metavar='<featurized_file>', nargs='+', help='Featurized instances for evaluation.')
     parser.add_argument('-t', '--thresholds', type=URIFileType(), metavar='<thresholds>', help='Threshold file to use for prediction.')
-    parser.add_argument('--load-probabilities', type=URIFileType('rb'), metavar='<probabilities_file>', help='Load probabilities from here instead of recalculating.')
 
+    parser.add_argument('--load-probabilities', type=URIFileType('rb'), metavar='<probabilities_file>', help='Load probabilities from here instead of recalculating.')
     parser.add_argument('--save-probabilities', type=URIFileType('wb'), metavar='<probabilities_file>', help='Save evaluation probabilities; useful for calibration.')
     parser.add_argument('--min-precision', type=float, metavar='<precision>', default=None, help='Set the minimum precision threshold.')
     parser.add_argument('--best-thresholds', type=URIFileType('w'), metavar='<thresholds_file>', help='Save best F1 threshold values here.')
