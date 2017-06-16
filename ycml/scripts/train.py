@@ -44,15 +44,15 @@ def main():
 
     X_featurized, Y_labels = load_featurized(A.featurized, keys=('X_featurized', 'Y_labels'))
 
-    fit_args = {}
+    kwargs = dict(fit_args={})
     if A.validation_data:
         X_validation, Y_validation = load_featurized(A.validation_data, keys=('X_featurized', 'Y_labels'))
-        fit_args['validation_data'] = (X_validation, Y_validation)
+        kwargs['validation_data'] = (X_validation, Y_validation)
     #end if
 
-    if A.resume: fit_args['resume'] = A.resume
+    if A.resume: kwargs['fit_args']['resume'] = A.resume
 
-    classifier = classifier_class(**classifier_parameters).fit(X_featurized, Y_labels, fit_args=fit_args)
+    classifier = classifier_class(**classifier_parameters).fit(X_featurized, Y_labels, **kwargs)
 
     if A.output: classifier.save(A.output)
 #end def

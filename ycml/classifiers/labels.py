@@ -21,9 +21,15 @@ class LabelsClassifier(BaseClassifier):
         self.include = set(include)
     #end def
 
-    def _fit(self, X, Y_labels, *, binarize_args={}, fit_args={}, **kwargs):
+    def _fit(self, X, Y_labels, *, validation_data=None, binarize_args={}, fit_args={}, **kwargs):
         Y_binarized = self.binarize_labels(Y_labels, **binarize_args)
-        return self.fit_binarized(X, Y_binarized, **fit_args)
+        if validation_data is not None:
+            X_validation, Y_validation = validation_data
+            Y_validation_binarized = self.binarize_labels(Y_validation, **binarize_args)
+            validation_data = (X_validation, Y_validation_binarized)
+        #end if
+
+        return self.fit_binarized(X, Y_binarized, validation_data=validation_data, **fit_args)
     #end def
 
     def fit_binarized(self, X_featurized, Y_binarized, **kwargs): raise NotImplementedError('fit_binarized is not implemented.')
