@@ -25,7 +25,11 @@ class PureTransformer(BaseEstimator, TransformerMixin):
     def transform(self, X, **kwargs):
         timer = Timer()
         transformed = self._transform(X, **kwargs)
-        if self.nparray: transformed = np.array(transformed)
+        if self.nparray:
+            transformed = np.array(transformed)
+            if transformed.ndim == 1:
+                transformed = transformed.reshape(transformed.shape[0], 1)
+        #end if
         logger.debug('Done <{}> transformation{}.'.format(type(self).__name__, timer))
 
         return transformed
