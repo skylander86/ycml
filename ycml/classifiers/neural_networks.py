@@ -74,36 +74,18 @@ class KerasNNClassifierMixin(object):
         K.set_session(tf_session)
     #end def
 
-    def keras_fit(self, X, Y, *, nn_model=None, validation_data=None, **kwargs):
+    def keras_fit(self, X, Y, *, nn_model=None, validation_data=None, **fit_args):
         if nn_model is None: nn_model = getattr(self, self.NN_MODEL_ATTRIBUTE)
 
-        if self.initial_weights:
-            with uri_to_tempfile(self.initial_weights) as f:
-                nn_model.load_weights(f.name)
-            logger.info('Loaded initial weights file from <{}>.'.format(self.initial_weights))
-        #end if
+        if not self._pre_fit_setup(nn_model, **fit_args): return
 
-        if self.epochs == 0:
-            logger.warning('Epochs is set to 0. Model fitting will not continue.')
-            return History()
-        #end if
-
-        return nn_model.fit(X, Y, validation_data=validation_data, validation_split=0.0 if validation_data is not None else self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), initial_epoch=self.initial_epoch, **kwargs)
+        return nn_model.fit(X, Y, validation_data=validation_data, validation_split=0.0 if validation_data is not None else self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), initial_epoch=self.initial_epoch, **fit_args)
     #end def
 
-    def keras_fit_generator(self, X, Y, *, nn_model=None, generator_func=None, validation_data=None, **kwargs):
+    def keras_fit_generator(self, X, Y, *, nn_model=None, generator_func=None, validation_data=None, **fit_args):
         if nn_model is None: nn_model = getattr(self, self.NN_MODEL_ATTRIBUTE)
 
-        if self.initial_weights:
-            with uri_to_tempfile(self.initial_weights) as f:
-                nn_model.load_weights(f.name)
-            logger.info('Loaded initial weights file from <{}>.'.format(self.initial_weights))
-        #end if
-
-        if self.epochs == 0:
-            logger.warn('Epochs is set to 0. Model fitting will not continue.')
-            return History()
-        #end if
+        if not self._pre_fit_setup(nn_model, **fit_args): return
 
         if validation_data is None:
             X_train, X_validation, Y_train, Y_validation = train_test_split(X, Y, test_size=self.validation_size)
@@ -120,7 +102,35 @@ class KerasNNClassifierMixin(object):
 
         if generator_func is None: generator_func = self._generator
 
-        return nn_model.fit_generator(generator_func(X_train, Y_train, batch_size=self.batch_size), steps_per_epoch=steps_per_epoch, epochs=self.epochs, verbose=self.verbose, callbacks=self.build_callbacks(), validation_data=validation_data, initial_epoch=self.initial_epoch, **kwargs)
+        return nn_model.fit_generator(generator_func(X_train, Y_train, batch_size=self.batch_size), steps_per_epoch=steps_per_epoch, epochs=self.epochs, verbose=self.verbose, callbacks=self.build_callbacks(), validation_data=validation_data, initial_epoch=self.initial_epoch, **fit_args)
+    #end def
+
+    def _pre_fit_setup(self, nn_model, resume=None, **kwargs):
+        if resume:
+            self.initial_weights = resume[0]
+            if len(resume) > 1:
+                self.initial_epoch = int(resume[1])
+                if self.initial_epoch < 0:
+                    logger.info('Detected negative initial epoch value. Will not perform model fitting.')
+                    self.epochs = 0
+                #end if
+            #end if
+
+            logger.info('Will resume using initial weights file from <{}> and epoch {}.'.format(self.initial_weights, self.initial_epoch))
+        #end if
+
+        if self.initial_weights:
+            with uri_to_tempfile(self.initial_weights) as f:
+                nn_model.load_weights(f.name)
+            logger.info('Loaded initial weights file from <{}>.'.format(self.initial_weights))
+        #end if
+
+        if self.epochs == 0:
+            logger.warning('Epochs is set to 0. Model fitting will not continue.')
+            return
+        #end if
+
+        return True
     #end def
 
     def _generator(self, X, Y, *, batch_size=128):
