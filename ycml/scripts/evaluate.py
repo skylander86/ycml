@@ -26,7 +26,7 @@ def main():
     parser.add_argument('--classifier-info', type=URIFileType(), metavar='<classifier_file>', help='Display information about classifier.')
 
     parser.add_argument('-c', '--classifier', type=URIFileType(), metavar='<classifier_file>', help='Classifier file to use for evaluation.')
-    parser.add_argument('-f', '--featurized', type=URIFileType(), metavar='<featurized_file>', help='Featurized instances for evaluation.')
+    parser.add_argument('-f', '--featurized', type=URIFileType(), metavar='<featurized_file>', nargs='+', help='Featurized instances for evaluation.')
     parser.add_argument('-t', '--thresholds', type=URIFileType(), metavar='<thresholds>', help='Threshold file to use for prediction.')
     parser.add_argument('--load-probabilities', type=URIFileType('rb'), metavar='<probabilities_file>', help='Load probabilities from here instead of recalculating.')
 
@@ -77,7 +77,21 @@ def main():
         labels = classifier.classes_
         if A.thresholds: thresholds = get_thresholds_from_file(A.thresholds, labels)
 
-        X_featurized, Y_labels, featurizer_uuid = load_featurized(A.featurized, keys=('X_featurized', 'Y_labels', 'featurizer_uuid'))
+        featurizer_uuid = None
+        X_featurized, Y_labels = None, None
+        for f in A.featurized:
+            X, Y, uuid = load_featurized(f, keys=('X_featurized', 'Y_labels', 'featurizer_uuid'))
+            if featurizer_uuid is None:
+                featurizer_uuid = uuid
+                X_featurized = X
+                Y_labels = Y
+            else:
+                if uuid != featurizer_uuid: raise ValueError('<{}> has featurizer UUID "{}" which is inconsistent with <{}> UUID "{}".'.format(f.name, uuid, A.featurized[0].name, featurizer_uuid))
+                X_featurized = np.concatenate((X_featurized, X), axis=0)
+                Y_labels = np.concatenate((Y_labels, Y), axis=0)
+            #end if
+        #end for
+        # X_featurized, Y_labels, featurizer_uuid = load_featurized(A.featurized, keys=('X_featurized', 'Y_labels', 'featurizer_uuid'))
         Y_proba, _ = classifier.predict_and_proba(X_featurized, thresholds=thresholds, binarized=True)
         Y_true_binarized = classifier.binarize_labels(Y_labels)
 
