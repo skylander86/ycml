@@ -37,6 +37,13 @@ class LabelsClassifier(BaseClassifier):
 
     def predict_and_proba(self, X_featurized, *, binarized=True, **kwargs):
         Y_proba, Y_predict_binarized = super(LabelsClassifier, self).predict_and_proba(X_featurized, **kwargs)
+        if Y_proba.ndim == 1:
+            Y_proba_2d = np.zeros((Y_proba.shape[0], 2), dtype=Y_proba.dtype)
+            Y_proba_2d[:, 0] = Y_proba
+            Y_proba_2d[:, 1] = 1.0 - Y_proba
+            Y_proba = Y_proba_2d
+        #end if
+
         if binarized: return Y_proba, Y_predict_binarized
 
         return Y_proba, self.unbinarize_labels(Y_predict_binarized)
