@@ -37,13 +37,6 @@ class LabelsClassifier(BaseClassifier):
 
     def predict_and_proba(self, X_featurized, *, binarized=True, **kwargs):
         Y_proba, Y_predict_binarized = super(LabelsClassifier, self).predict_and_proba(X_featurized, **kwargs)
-        if Y_proba.ndim == 1:
-            Y_proba_2d = np.zeros((Y_proba.shape[0], 2), dtype=Y_proba.dtype)
-            Y_proba_2d[:, 0] = Y_proba
-            Y_proba_2d[:, 1] = 1.0 - Y_proba
-            Y_proba = Y_proba_2d
-        #end if
-
         if binarized: return Y_proba, Y_predict_binarized
 
         return Y_proba, self.unbinarize_labels(Y_predict_binarized)
@@ -79,9 +72,14 @@ class BinaryLabelsClassifier(LabelsClassifier):
         self.not_pos_label = 'not ' + pos_label if not_pos_label is None else not_pos_label
     #end def
 
-    def predict_and_proba(self, *args, **kwargs):
-        Y_proba, Y_predict = super(BinaryLabelsClassifier, self).predict_and_proba(*args, **kwargs)
-        binarized = kwargs.get('binarized', True)
+    def predict_and_proba(self, X_featurized, *, binarized=True, **kwargs):
+        Y_proba, Y_predict = super(BinaryLabelsClassifier, self).predict_and_proba(X_featurized, binarized=binarized, **kwargs)
+        if Y_proba.ndim == 1:
+            Y_proba_2d = np.zeros((Y_proba.shape[0], 2), dtype=Y_proba.dtype)
+            Y_proba_2d[:, 0] = Y_proba
+            Y_proba_2d[:, 1] = 1.0 - Y_proba
+            Y_proba = Y_proba_2d
+        #end if
 
         if binarized:
             Y_predict = Y_predict[:, 0]  # must be 0th one coz classes_ only has 1 thing
