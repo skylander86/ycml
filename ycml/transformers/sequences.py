@@ -48,9 +48,13 @@ class TokensToIndexTransformer(PureTransformer):
 
         if self.pad_sequences is not None:
             from keras.preprocessing.sequence import pad_sequences as keras_pad_sequences
-            X_transformed = keras_pad_sequences(X_transformed, maxlen=None if self.pad_sequences is True else self.pad_sequences, **self.pad_sequences_args)
-            if self.pad_sequences is True:
+
+            maxlen = getattr(self, 'pad_sequences_maxlen_', None if self.pad_sequences is True else self.pad_sequences)
+            X_transformed = keras_pad_sequences(X_transformed, maxlen=maxlen, **self.pad_sequences_args)
+            if self.pad_sequences is True or maxlen is not None:
                 logger.debug('TokensToIndexTransformer transformed sequences has max length {}.'.format(X_transformed.shape[1]))
+
+            self.pad_sequences_maxlen_ = X_transformed.shape[1]
         #end if
 
         return X_transformed
