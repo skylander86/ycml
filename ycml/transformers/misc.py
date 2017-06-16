@@ -6,8 +6,8 @@ __all__ = ['DictExtractionTransformer']
 class DictExtractionTransformer(PureTransformer):
     """Extract a given key from dictionary object."""
 
-    def __init__(self, key=None, default=None):
-        super(DictExtractionTransformer, self).__init__()
+    def __init__(self, key=None, default=None, **kwargs):
+        super(DictExtractionTransformer, self).__init__(**kwargs)
         self.set_params(key=key, default=default)
     #end def
 

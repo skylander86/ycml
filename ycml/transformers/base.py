@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 # Helper class. A transformer that only does transformation and does not need to fit any internal parameters.
 class PureTransformer(BaseEstimator, TransformerMixin):
+    FORCE_NP_1D_ARRAY = False
+
     def __init__(self, nparray=True, **kwargs):
         super(PureTransformer, self).__init__(**kwargs)
 
@@ -26,7 +28,8 @@ class PureTransformer(BaseEstimator, TransformerMixin):
         timer = Timer()
         transformed = self._transform(X, **kwargs)
         if self.nparray:
-            transformed = np.array(transformed)
+            if self.FORCE_NP_1D_ARRAY: transformed = np.array(transformed, dtype=np.object)
+            else: transformed = np.array(transformed)
             if transformed.ndim == 1:
                 transformed = transformed.reshape(transformed.shape[0], 1)
         #end if
