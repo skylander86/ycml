@@ -9,19 +9,21 @@ import logging
 import os
 from shutil import copyfileobj
 from tempfile import NamedTemporaryFile
+import time
 
 try: from urlparse import urlparse  # Python 2
 except ImportError: from urllib.parse import urlparse  # Python 3
 
 try:
     import boto3
+    from botocore.exceptions import ClientError
     s3_client = boto3.client('s3')
 except ImportError: boto3 = None
 
 try: import requests
 except ImportError: requests = None
 
-__all__ = ['uri_open', 'uri_to_tempfile', 'uri_read', 'uri_dump', 'URIFileType', 'URIType']
+__all__ = ['uri_open', 'uri_to_tempfile', 'uri_read', 'uri_dump', 'uri_exists', 'get_uri_metadata', 'uri_exists_wait', 'URIFileType', 'URIType']
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +103,49 @@ def uri_read(uri, mode='rb', encoding='utf-8', use_gzip='auto', io_args={}, urif
 def uri_dump(uri, content, mode='wb', encoding='utf-8', use_gzip='auto', io_args={}, urifs_args={}):
     with uri_open(uri, mode=mode, encoding=encoding, use_gzip=use_gzip, io_args=io_args, urifs_args=urifs_args) as f:
         f.write(content)
+#end def
+
+
+def get_uri_metadata(uri):
+    o = urlparse(uri)
+
+    if o.scheme == 's3':
+        response = s3_client.head_object(Bucket=o.netloc, Key=o.path.lstrip('/'))
+        return response['Metadata']
+    #end if
+
+    return {}
+#end def
+
+
+def uri_exists(uri):
+    o = urlparse(uri)
+
+    if o.scheme == 's3':
+        try:
+            s3_client.head_object(Bucket=o.netloc, Key=o.path.lstrip('/'))
+            return True
+        except ClientError: return False
+
+    elif not o.scheme or o.scheme == 'file':
+        fpath = os.path.join(o.netloc, o.path.lstrip('/')).rstrip('/') if o.netloc else o.path
+        return os.path.exists(fpath)
+    #end if
+
+    return False
+#end def
+
+
+def uri_exists_wait(uri, timeout=300, interval=5):
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        if uri_exists(uri): return True
+        time.sleep(interval)
+    #end while
+
+    if uri_exists(uri): return True
+
+    return False
 #end def
 
 
