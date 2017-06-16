@@ -92,7 +92,7 @@ class BinaryLabelsClassifier(LabelsClassifier):
             return np.zeros((0, 1))
 
         Y_labels_pos = [self.pos_label if self.pos_label in Y_labels[i] else self.not_pos_label for i in range(Y_labels.shape[0])]
-        Y_binarized = label_binarize(Y_labels_pos, classes=[self.pos_label, self.not_pos_label]).reshape(Y_labels.shape[0])
+        Y_binarized = label_binarize(Y_labels_pos, classes=[self.not_pos_label, self.pos_label]).reshape(Y_labels.shape[0])  # 1 is for pos label, 0 otherwise
 
         return Y_binarized
     #end def
