@@ -139,8 +139,6 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
 def load_classifier(f):
     with tarfile.open(fileobj=f, mode='r') as tf:
         classifier = pickle.load(tf.extractfile('model.pkl'))
-        logger.debug('{} found in <{}>.'.format(classifier, f.name))
-
         classifier.load_from_tarfile(tf)
     #end with
 
