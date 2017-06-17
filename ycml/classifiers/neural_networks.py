@@ -74,10 +74,10 @@ class KerasNNClassifierMixin(object):
         K.set_session(tf_session)
     #end def
 
-    def keras_fit(self, X, Y, *, nn_model=None, validation_data=None, **fit_args):
+    def keras_fit(self, X, Y, *, nn_model=None, validation_data=None, resume=None, **fit_args):
         if nn_model is None: nn_model = getattr(self, self.NN_MODEL_ATTRIBUTE)
 
-        if not self._pre_fit_setup(nn_model, **fit_args): return
+        if not self._pre_fit_setup(nn_model, resume=resume, **fit_args): return
 
         return nn_model.fit(X, Y, validation_data=validation_data, validation_split=0.0 if validation_data is not None else self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), initial_epoch=self.initial_epoch, **fit_args)
     #end def
