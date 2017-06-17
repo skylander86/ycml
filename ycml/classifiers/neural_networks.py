@@ -86,6 +86,8 @@ class KerasNNClassifierMixin(object):
             validation_data = (X_validation.todense() if sps.issparse(X_validation) else X_validation, Y_validation.todense() if sps.issparse(Y_validation) else Y_validation)
         #end if
 
+        logger.info('{} instances used for training and {} instances used for validation.'.format(Y.shape[0], validation_data[1].shape[0] if validation_data else int(self.validation_size * Y.shape[0])))
+
         return nn_model.fit(X, Y, validation_data=validation_data, validation_split=0.0 if validation_data is not None else self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), initial_epoch=self.initial_epoch, **fit_args)
     #end def
 
@@ -103,11 +105,11 @@ class KerasNNClassifierMixin(object):
             validation_data = (X_validation.todense() if sps.issparse(X_validation) else X_validation, Y_validation.todense() if sps.issparse(Y_validation) else Y_validation)
         #end if
         N_train = X_train.shape[0]
-        logger.debug('{} instances used for training and {} instances used for validation.'.format(N_train, validation_data[1].shape[0]))
+        logger.info('{} instances used for training and {} instances used for validation.'.format(N_train, validation_data[1].shape[0]))
 
         steps_per_epoch = int((N_train * self.passes_per_epoch) / self.batch_size)
         if steps_per_epoch <= 0: raise ValueError('steps_per_epoch ({}) is <= 0!'.format(steps_per_epoch))
-        logger.debug('Fit generator will run {} steps per epoch with batch size of {}. This will make 1 pass through the training data in {:.2f} epochs.'.format(steps_per_epoch, self.batch_size, N_train / (steps_per_epoch * self.batch_size)))
+        logger.info('Fit generator will run {} steps per epoch with batch size of {}. This will make 1 pass through the training data in {:.2f} epochs.'.format(steps_per_epoch, self.batch_size, N_train / (steps_per_epoch * self.batch_size)))
 
         if generator_func is None: generator_func = self._generator
 
