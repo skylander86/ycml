@@ -121,7 +121,7 @@ class KerasNNClassifierMixin(object):
         if self.initial_weights:
             with uri_to_tempfile(self.initial_weights) as f:
                 nn_model.load_weights(f.name)
-            logger.info('Will resume using initial weights file from <{}> and epoch {}.'.format(self.initial_weights, self.initial_epoch))
+            logger.info('Loaded initial weights file from <{}> will start at epoch {}.'.format(self.initial_weights, self.initial_epoch))
         #end if
 
         if self.epochs == 0:
