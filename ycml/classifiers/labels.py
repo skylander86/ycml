@@ -23,10 +23,11 @@ class LabelsClassifier(BaseClassifier):
 
     def _fit(self, X, Y_labels, *, validation_data=None, binarize_args={}, fit_args={}, **kwargs):
         Y_binarized = self.binarize_labels(Y_labels, **binarize_args)
+        logger.debug('Binarized training labels.')
         if validation_data is not None:
             X_validation, Y_validation = validation_data
-            Y_validation_binarized = self.binarize_labels(Y_validation, **binarize_args)
-            validation_data = (X_validation, Y_validation_binarized)
+            validation_data = (X_validation, self.binarize_labels(Y_validation, **binarize_args))
+            logger.debug('Binarized validation labels.')
         #end if
 
         return self.fit_binarized(X, Y_binarized, validation_data=validation_data, **fit_args)
@@ -131,13 +132,12 @@ class BinaryLabelsClassifier(LabelsClassifier):
 #end def
 
 
-# TODO: use multilabel format and inherit multilabelclassifier
 class MulticlassLabelsClassifier(LabelsClassifier):
     def __init__(self, **kwargs):
         super(MulticlassLabelsClassifier, self).__init__(**kwargs)
     #end def
 
-    def _fit(self, X, Y_labels, *, binarize_args={}, fit_args={}, **kwargs):
+    def _fit(self, X, Y_labels, **kwargs):
         Y_labels_filtered = self._filter_labels(Y_labels)
         Y_labels_filtered = np.array([Y_labels_filtered[i][0] if Y_labels_filtered[i] else '<none>' for i in range(Y_labels_filtered.shape[0])])
 
@@ -146,7 +146,7 @@ class MulticlassLabelsClassifier(LabelsClassifier):
 
         if not len(self.classes_): raise ValueError('There are no labels available for fitting model.')
 
-        return super(MulticlassLabelsClassifier, self)._fit(X, Y_labels, binarize_args=binarize_args, fit_args=fit_args, **kwargs)
+        return super(MulticlassLabelsClassifier, self)._fit(X, Y_labels_filtered, **kwargs)
     #end def
 
     def predict_and_proba(self, X_featurized, *, binarized=True, **kwargs):
@@ -227,14 +227,14 @@ class MultiLabelsClassifier(LabelsClassifier):
         self.include = set(include)
     #end def
 
-    def _fit(self, X, Y_labels, *, binarize_args={}, fit_args={}, **kwargs):
+    def _fit(self, X, Y_labels, **kwargs):
         Y_labels_filtered = self._filter_labels(Y_labels)
         self.label_binarizer_ = MultiLabelBinarizer(sparse_output=False).fit(Y_labels_filtered)
         logger.info('{} labels found in training instances.'.format(len(self.classes_)))
 
         if not len(self.classes_): raise ValueError('There are no labels available for fitting model.')
 
-        return super(MultiLabelsClassifier, self)._fit(X, Y_labels, binarize_args=binarize_args, fit_args=fit_args, **kwargs)
+        return super(MultiLabelsClassifier, self)._fit(X, Y_labels_filtered, **kwargs)
     #end def
 
     def binarize_labels(self, Y_labels):
