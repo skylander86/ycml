@@ -108,6 +108,7 @@ class KerasNNClassifierMixin(object):
     def _pre_fit_setup(self, nn_model, *, resume=None, **kwargs):
         if resume:
             self.initial_weights = resume[0]
+
             if len(resume) > 1:
                 self.initial_epoch = int(resume[1])
                 if self.initial_epoch < 0:
@@ -115,9 +116,9 @@ class KerasNNClassifierMixin(object):
                     self.epochs = 0
                 #end if
             #end if
-            logger.info('Will resume using initial weights file from <{}> and epoch {}.'.format(self.initial_weights, self.initial_epoch))
+        #end if
 
-        elif self.initial_weights:
+        if self.initial_weights:
             with uri_to_tempfile(self.initial_weights) as f:
                 nn_model.load_weights(f.name)
             logger.info('Will resume using initial weights file from <{}> and epoch {}.'.format(self.initial_weights, self.initial_epoch))
