@@ -27,7 +27,6 @@ class LabelsClassifier(BaseClassifier):
         if validation_data is not None:
             X_validation, Y_validation = validation_data
             validation_data = (X_validation, self.binarize_labels(Y_validation, **binarize_args))
-            print(self.binarize_labels(Y_validation, **binarize_args))
             logger.debug('Binarized validation labels.')
         #end if
 

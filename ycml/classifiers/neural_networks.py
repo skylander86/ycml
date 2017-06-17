@@ -79,6 +79,13 @@ class KerasNNClassifierMixin(object):
 
         if not self._pre_fit_setup(nn_model, resume=resume, **fit_args): return
 
+        if sps.issparse(X): X = X.todense()
+        if sps.issparse(Y): Y = Y.todense()
+        if validation_data is not None:
+            X_validation, Y_validation = validation_data
+            validation_data = (X_validation.todense() if sps.issparse(X_validation) else X_validation, Y_validation.todense() if sps.issparse(Y_validation) else Y_validation)
+        #end if
+
         return nn_model.fit(X, Y, validation_data=validation_data, validation_split=0.0 if validation_data is not None else self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), initial_epoch=self.initial_epoch, **fit_args)
     #end def
 
@@ -92,6 +99,8 @@ class KerasNNClassifierMixin(object):
             validation_data = (X_validation.todense() if sps.issparse(X_validation) else X_validation, Y_validation.todense() if sps.issparse(Y_validation) else Y_validation)
         else:
             X_train, Y_train = X, Y
+            X_validation, Y_validation = validation_data
+            validation_data = (X_validation.todense() if sps.issparse(X_validation) else X_validation, Y_validation.todense() if sps.issparse(Y_validation) else Y_validation)
         #end if
         N_train = X_train.shape[0]
         logger.debug('{} instances used for training and {} instances used for validation.'.format(N_train, validation_data[1].shape[0]))
