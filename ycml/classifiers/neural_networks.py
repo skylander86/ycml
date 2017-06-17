@@ -82,10 +82,10 @@ class KerasNNClassifierMixin(object):
         return nn_model.fit(X, Y, validation_data=validation_data, validation_split=0.0 if validation_data is not None else self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), initial_epoch=self.initial_epoch, **fit_args)
     #end def
 
-    def keras_fit_generator(self, X, Y, *, nn_model=None, generator_func=None, validation_data=None, **fit_args):
+    def keras_fit_generator(self, X, Y, *, nn_model=None, generator_func=None, validation_data=None, resume=None, **fit_args):
         if nn_model is None: nn_model = getattr(self, self.NN_MODEL_ATTRIBUTE)
 
-        if not self._pre_fit_setup(nn_model, **fit_args): return
+        if not self._pre_fit_setup(nn_model, resume=resume, **fit_args): return
 
         if validation_data is None:
             X_train, X_validation, Y_train, Y_validation = train_test_split(X, Y, test_size=self.validation_size)
@@ -105,7 +105,7 @@ class KerasNNClassifierMixin(object):
         return nn_model.fit_generator(generator_func(X_train, Y_train, batch_size=self.batch_size), steps_per_epoch=steps_per_epoch, epochs=self.epochs, verbose=self.verbose, callbacks=self.build_callbacks(), validation_data=validation_data, initial_epoch=self.initial_epoch, **fit_args)
     #end def
 
-    def _pre_fit_setup(self, nn_model, resume=None, **kwargs):
+    def _pre_fit_setup(self, nn_model, *, resume=None, **kwargs):
         if resume:
             self.initial_weights = resume[0]
             if len(resume) > 1:
