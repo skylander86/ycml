@@ -60,9 +60,7 @@ class FeaturizerAndClassifier(BaseEstimator, ClassifierMixin):
     #end def
 
     def predict_proba(self, X, **kwargs):
-        print(X)
         X_featurized = self.featurizer_.transform(X)
-        print(X_featurized)
         Y_proba = self.classifier_.predict_proba(X_featurized, **kwargs)
 
         return Y_proba
