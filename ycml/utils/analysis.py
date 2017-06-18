@@ -258,8 +258,8 @@ def _make_label_indicator(Y_true, Y_proba):
         if Y_proba.ndim == 1 or Y_proba.shape[1] == 1:
             assert Y_true.shape[1] == 2
             temp = np.zeros((Y_proba.shape[0], 2))
-            temp[:, 0] = Y_proba
-            temp[:, 1] = 1.0 - Y_proba
+            temp[:, 0] = Y_proba if Y_proba.ndim == 1 else Y_proba[:, 0]
+            temp[:, 1] = 1.0 - (Y_proba if Y_proba.ndim == 1 else Y_proba[:, 0])
             Y_proba = temp
         #end if
     #end if
