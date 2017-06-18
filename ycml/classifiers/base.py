@@ -142,7 +142,7 @@ def load_classifier(f):
         classifier.load_from_tarfile(tf)
     #end with
 
-    logger.info('{} loaded from <{}>.'.format(classifier, f.name))
+    logger.info('Loaded {} from <{}>.'.format(classifier, f.name))
 
     return classifier
 #end def

@@ -35,7 +35,7 @@ class LabelsClassifier(BaseClassifier):
 
     def fit_binarized(self, X_featurized, Y_binarized, **kwargs): raise NotImplementedError('fit_binarized is not implemented.')
 
-    def predict(self, X_featurized, binarized=True, **kwargs):
+    def predict(self, X_featurized, *, binarized=True, **kwargs):
         Y_predict_binarized = super(LabelsClassifier, self).predict(X_featurized, **kwargs)
         if binarized: return Y_predict_binarized
 
