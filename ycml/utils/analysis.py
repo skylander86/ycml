@@ -44,6 +44,7 @@ def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, th
         # Results using 0.5 as threshold
         p, r, f1, _ = precision_recall_fscore_support(Y_true[:, i], (Y_proba[:, i] >= 0.5), average='binary')  # Using thresholds
         support = Y_true[:, i].sum()
+        if support == 0: continue
         ap_score = average_precision_score(Y_true[:, i], Y_proba[:, i])
         row = [name, '{:d}'.format(int(support)), '{:.3f}'.format(ap_score), '{:.3f}/{:.3f}/{:.3f}'.format(p, r, f1)]
         support_total += support
