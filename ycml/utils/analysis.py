@@ -27,8 +27,7 @@ def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, th
 
     if isinstance(thresholds, float): thresholds = np.full(n_classes, thresholds)
     if thresholds is not None and n_classes == 2: thresholds[1] = 1.0 - thresholds[0]
-    print(thresholds)
-    assert thresholds is None or ((thresholds <= 1).all() and (thresholds >= 0.0).all())
+    if thresholds is not None: assert ((thresholds <= 1).all() and (thresholds >= 0.0).all())
 
     if isinstance(precision_thresholds, float): precision_thresholds = np.full(n_classes, precision_thresholds)
     assert precision_thresholds is None or ((precision_thresholds <= 1).all() and (precision_thresholds >= 0.0).all())

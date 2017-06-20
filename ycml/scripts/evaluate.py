@@ -72,6 +72,8 @@ def main():
         thresholds = o['thresholds']
         labels = o['labels']
 
+        if A.thresholds: thresholds = get_thresholds_from_file(A.thresholds, labels)
+
     else:
         classifier = load_classifier(A.classifier)
         labels = classifier.classes_
