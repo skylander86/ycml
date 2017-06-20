@@ -110,6 +110,8 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
             self.save_to_tarfile(tf)
         #end with
 
+        f.flush()
+
         logger.info('{} saved to <{}>.'.format(self, f.name))
 
         return self
