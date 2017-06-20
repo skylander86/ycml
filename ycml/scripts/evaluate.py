@@ -99,7 +99,7 @@ def main():
         assert Y_true_binarized.shape[0] == N
     #end if
 
-    logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_proba, target_names=labels, thresholds=thresholds, precision_thresholds=A.min_precision)))
+    logger.info('Classification report:\n{}'.format(classification_report(Y_true_binarized, Y_proba, target_names=labels, thresholds=thresholds, precision_thresholds=A.min_precision, order='support')))
 
     if A.save_probabilities:
         np.savez_compressed(A.save_probabilities, featurizer_uuid=featurizer_uuid, classifier_uuid=classifier.uuid_, Y_proba=Y_proba, Y_true_binarized=Y_true_binarized, thresholds=thresholds, labels=labels)

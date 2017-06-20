@@ -20,7 +20,7 @@ __all__ = ['classification_report', 'find_best_thresholds', 'generate_pr_curves'
 logger = logging.getLogger(__name__)
 
 
-def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, thresholds=None, precision_thresholds=None):
+def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, thresholds=None, precision_thresholds=None, order='names'):
     Y_true, Y_proba = _make_label_indicator(Y_true, Y_proba)
     Y_true, Y_proba, target_names = _filter_labels(Y_true, Y_proba, labels, target_names)
     n_classes = Y_true.shape[1]
@@ -97,6 +97,9 @@ def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, th
 
         table.append(row)
     #end for
+
+    if order == 'support':
+        table.sort(key=lambda row: int(row[1]), reverse=True)
 
     headers = ['Label', 'Support', 'AP', 'T=0.5']
     if thresholds is not None: headers.append('File T')
