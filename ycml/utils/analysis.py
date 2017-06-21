@@ -192,6 +192,8 @@ def generate_pr_curves(Y_true, Y_proba, output_prefix, *, labels=None, target_na
     thresholds_best = np.zeros(n_classes)
     thresholds_minprec = np.zeros(n_classes)
     for i, name in enumerate(target_names):
+        if Y_true[:, i].sum() == 0 and Y_proba[:, i].sum() == 0: continue
+
         precision, recall, thresholds_ = precision_recall_curve(Y_true[:, i], Y_proba[:, i])
         f1 = np.nan_to_num((2 * precision * recall) / (precision + recall + 1e-8))
         ap_score = average_precision_score(Y_true[:, i], Y_proba[:, i])
