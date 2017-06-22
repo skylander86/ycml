@@ -31,9 +31,11 @@ def main():
 
     parser.add_argument('--load-probabilities', type=URIFileType('rb'), metavar='<probabilities_file>', help='Load probabilities from here instead of recalculating.')
     parser.add_argument('--save-probabilities', type=URIFileType('wb'), metavar='<probabilities_file>', help='Save evaluation probabilities; useful for calibration.')
+
     parser.add_argument('--min-precision', type=float, metavar='<precision>', default=None, help='Set the minimum precision threshold.')
     parser.add_argument('--best-thresholds', type=URIFileType('w'), metavar='<thresholds_file>', help='Save best F1 threshold values here.')
     parser.add_argument('--minprec-thresholds', type=URIFileType('w'), metavar='<thresholds_file>', help='Save minimum precision best F1 threshold values here.')
+    parser.add_argument('--clip-thresholds', type=float, nargs=2, metavar=('lower', 'upper'), default=None, help='Clip threshold values to given range. Only applied when saving to file.')
     parser.add_argument('--pr-curves', type=URIType(), metavar='<folder>', help='Save precision-recall curves in this folder.')
 
     A = parser.parse_args()
@@ -110,12 +112,22 @@ def main():
 
     if A.best_thresholds:
         best_thresholds = find_best_thresholds(Y_true_binarized, Y_proba, target_names=labels)
+        if A.clip_thresholds:
+            best_thresholds.clip(A.clip_thresholds[0], A.clip_thresholds[1])
+            logger.info('Best threshold values clipped to [{}, {}].'.format(*A.clip_thresholds))
+        #end if
+
         o = dict((c, float(best_thresholds[i])) for i, c in enumerate(labels))
         save_dictionary_to_file(A.best_thresholds, o, title='thresholds')
     #end if
 
     if A.minprec_thresholds:
         minprec_thresholds = find_best_thresholds(Y_true_binarized, Y_proba, precision_thresholds=A.min_precision, target_names=labels)
+        if A.clip_thresholds:
+            minprec_thresholds.clip(A.clip_thresholds[0], A.clip_thresholds[1])
+            logger.info('Min-precision threshold values clipped to [{}, {}].'.format(*A.clip_thresholds))
+        #end if
+
         o = dict((c, float(minprec_thresholds[i])) for i, c in enumerate(labels))
         save_dictionary_to_file(A.minprec_thresholds, o, title='thresholds')
     #end if
