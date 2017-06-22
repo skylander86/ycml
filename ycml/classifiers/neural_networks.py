@@ -5,7 +5,7 @@ from tempfile import NamedTemporaryFile
 
 try:
     from keras import backend as K
-    from keras.callbacks import Callback, ModelCheckpoint, History
+    from keras.callbacks import Callback, ModelCheckpoint
     from keras.models import load_model
 
     import tensorflow as tf
