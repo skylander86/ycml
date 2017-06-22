@@ -12,7 +12,6 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import precision_recall_fscore_support
-from sklearn.preprocessing import label_binarize
 
 from tabulate import tabulate
 
@@ -25,19 +24,23 @@ logger = logging.getLogger(__name__)
 
 def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, thresholds=None, precision_thresholds=None, order='names'):
     Y_true, Y_proba = _make_label_indicator(Y_true, Y_proba)
-    Y_true, Y_proba, target_names = _filter_labels(Y_true, Y_proba, labels, target_names)
+    Y_true, Y_proba, target_names = _filter_labels(Y_true, Y_proba, labels=labels, target_names=target_names)
+
     n_classes = Y_true.shape[1]
+    assert len(target_names) == n_classes
 
     if isinstance(thresholds, float): thresholds = np.full(n_classes, thresholds)
     if thresholds is not None and n_classes == 2: thresholds[1] = 1.0 - thresholds[0]
-    if thresholds is not None: assert ((thresholds <= 1).all() and (thresholds >= 0.0).all())
+    if thresholds is not None:
+        assert thresholds.shape[0] == n_classes
+        assert ((thresholds <= 1).all() and (thresholds >= 0.0).all())
+    #end if
 
     if isinstance(precision_thresholds, float): precision_thresholds = np.full(n_classes, precision_thresholds)
-    assert precision_thresholds is None or ((precision_thresholds <= 1).all() and (precision_thresholds >= 0.0).all())
-
-    assert Y_true.shape[0] == Y_proba.shape[0]
-    assert Y_true.shape[1] == Y_proba.shape[1]
-    assert len(target_names) == n_classes
+    if precision_thresholds is not None:
+        assert precision_thresholds.shape[0] == n_classes
+        assert ((precision_thresholds <= 1).all() and (precision_thresholds >= 0.0).all())
+    #end if
 
     table = []
     support_total, ap_score_total = 0.0, 0.0
@@ -136,7 +139,7 @@ def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, th
 
 def find_best_thresholds(Y_true, Y_proba, *, labels=None, target_names=None, precision_thresholds=None):
     Y_true, Y_proba = _make_label_indicator(Y_true, Y_proba)
-    Y_true, Y_proba, target_names = _filter_labels(Y_true, Y_proba, labels, target_names)
+    Y_true, Y_proba, target_names = _filter_labels(Y_true, Y_proba, labels=labels, target_names=target_names)
     n_classes = Y_true.shape[1]
 
     if precision_thresholds is not None and isinstance(precision_thresholds, float): precision_thresholds = np.full(n_classes, precision_thresholds)
@@ -179,7 +182,7 @@ def find_best_thresholds(Y_true, Y_proba, *, labels=None, target_names=None, pre
 
 def generate_pr_curves(Y_true, Y_proba, output_prefix, *, labels=None, target_names=None, thresholds=None, precision_thresholds=None):
     Y_true, Y_proba = _make_label_indicator(Y_true, Y_proba)
-    Y_true, Y_proba, target_names = _filter_labels(Y_true, Y_proba, labels, target_names)
+    Y_true, Y_proba, target_names = _filter_labels(Y_true, Y_proba, labels=labels, target_names=target_names)
     n_classes = Y_true.shape[1]
 
     if isinstance(thresholds, float): thresholds = np.full(n_classes, thresholds)
@@ -255,33 +258,34 @@ def generate_pr_curves(Y_true, Y_proba, output_prefix, *, labels=None, target_na
 
 
 def _make_label_indicator(Y_true, Y_proba):
-    if Y_true.ndim == 1 or Y_true.shape[1] == 1:  # have to be multiclass or binary
+    assert Y_true.shape[0] == Y_proba.shape[0]
+    assert Y_proba.ndim == 2
+    assert Y_proba.shape[1] > 1
+
+    if Y_true.ndim == 1:
+        Y_true_new = np.zeros(Y_proba.shape)
         Y_true_max = Y_true.max()
-        assert Y_true_max == int(Y_true_max)
 
-        if Y_true_max == 1:  # binary!
-            temp = np.zeros((Y_true.shape[0], 2))
-            temp[:, 0] = Y_true
-            temp[:, 1] = 1.0 - Y_true
-            Y_true = temp
-        else:  # multiclass
-            Y_true = label_binarize(Y_true, classes=range(int(Y_true_max) + 1))
+        if Y_true.shape[1] == 2:
+            assert Y_true_max == 1
+            for i in range(Y_true.shape[0]):
+                Y_true_new[i, 0] = 1.0 - Y_true[i]
+                Y_true_new[i, 1] = Y_true[i]
+            #end for
+        else:
+            assert Y_true_max == Y_true.shape[1]
+            for i in range(Y_true.shape[0]):
+                Y_true_new[i, Y_true[i]] = 1
         #end if
 
-        if Y_proba.ndim == 1 or Y_proba.shape[1] == 1:
-            assert Y_true.shape[1] == 2
-            temp = np.zeros((Y_proba.shape[0], 2))
-            temp[:, 0] = Y_proba if Y_proba.ndim == 1 else Y_proba[:, 0]
-            temp[:, 1] = 1.0 - (Y_proba if Y_proba.ndim == 1 else Y_proba[:, 0])
-            Y_proba = temp
-        #end if
+        return Y_true_new, Y_proba
     #end if
 
     return Y_true, Y_proba
 #end def
 
 
-def _filter_labels(Y_true, Y_proba, labels, target_names):
+def _filter_labels(Y_true, Y_proba, labels=[], target_names=None):
     if target_names is None: target_names = list(range(Y_true.shape[1]))
 
     if labels:
