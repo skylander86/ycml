@@ -6,16 +6,13 @@ import tarfile
 import time
 from uuid import uuid4
 
-import numpy as np
-
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.exceptions import NotFittedError
 
-from ..utils import load_dictionary_from_file
 from ..utils import Timer
 from ..utils import parse_n_jobs
 
-__all__ = ['BaseClassifier', 'load_classifier', 'get_thresholds_from_file']
+__all__ = ['BaseClassifier', 'load_classifier']
 
 logger = logging.getLogger(__name__)
 
@@ -43,49 +40,26 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
 
     def _fit(self, *args, **kwargs): raise NotImplementedError('_fit is not implemented.')
 
-    def predict_proba(self, X_featurized, *, thresholds=0.5, denominators=None, rescale=False, **kwargs):
+    def predict_proba(self, X_featurized, **kwargs):
         timer = Timer()
         Y_proba = self._predict_proba(X_featurized, **kwargs)
         logger.debug('Computed prediction probabilities on {} instances {}.'.format(X_featurized.shape[0], timer))
 
-        if not rescale: return Y_proba
-
-        if isinstance(thresholds, (float, np.float)):
-            thresholds = np.full(Y_proba.shape[1], thresholds)
-
-        if denominators is None:
-            denominators = 2.0 * (1.0 - thresholds)
-
-        rescaled = np.zeros(Y_proba.shape)
-        for i in range(Y_proba.shape[0]):
-            for k in range(Y_proba.shape[1]):
-                if Y_proba[i, k] > thresholds[k]: rescaled[i, k] = 0.5 + ((Y_proba[i, k] - thresholds[k]) / denominators[k])
-                else: rescaled[i, k] = Y_proba[i, k] / (thresholds[k] + thresholds[k])
-            #end for
-        #end for
-
-        return rescaled
+        return Y_proba
     #end def
 
     def _predict_proba(self, X_featurized, **kwargs):
         raise NotImplementedError('_predict_proba is not implemented.')
 
-    def predict(self, X_featurized, thresholds=0.5, **kwargs):
-        _, Y_predict = self.predict_and_proba(X_featurized, thresholds=thresholds, rescale=False, **kwargs)
+    def predict(self, X_featurized, **kwargs):
+        Y_predict = self.predict_proba(X_featurized) >= 0.5
 
         return Y_predict
     #end def
 
-    def predict_and_proba(self, X_featurized, *, thresholds=0.5, rescale=False, **kwargs):
-        Y_proba = self.predict_proba(X_featurized, thresholds=thresholds, rescale=rescale, **kwargs)
-
-        if rescale: Y_predict = Y_proba >= 0.5
-        else:
-            Y_predict = np.zeros(Y_proba.shape, dtype=np.bool)
-            if thresholds is None: thresholds = np.full(Y_proba.shape[1], 0.5)
-            for i in range(Y_proba.shape[0]):
-                Y_predict[i, :] = Y_proba[i, :] >= thresholds
-        #end def
+    def predict_and_proba(self, X_featurized, **kwargs):
+        Y_proba = self.predict_proba(X_featurized, **kwargs)
+        Y_predict = Y_proba >= 0.5
 
         return Y_proba, Y_predict
     #end def
@@ -147,10 +121,4 @@ def load_classifier(f):
     logger.info('Loaded {} from <{}>.'.format(classifier, f.name))
 
     return classifier
-#end def
-
-
-def get_thresholds_from_file(f, classes, *, default=0.5):
-    d = load_dictionary_from_file(f)
-    return np.array([float(d.get(c, default)) for c in classes])
 #end def

@@ -5,34 +5,30 @@ import numpy as np
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 
-from ..classifiers import load_classifier, get_thresholds_from_file
+from ..classifiers import load_classifier
 from ..featurizers import load_featurizer
 
 from ..utils import uri_open, get_settings
 
-__all__ = ['FeaturizerAndClassifier']
+__all__ = ['BaseFeatClass']
 
 logger = logging.getLogger(__name__)
 
 
-class FeaturizerAndClassifier(BaseEstimator, ClassifierMixin):
-    def __init__(self, settings={}, check_environment=True, featurizer_uri=None, classifier_uri=None, thresholds_uri=None, **kwargs):
-        self.featurizer_uri = get_settings(key='featurizer_uri', sources=('env', settings), raise_on_missing=True) if featurizer_uri is None else featurizer_uri
-        self.classifier_uri = get_settings(key='classifier_uri', sources=('env', settings), raise_on_missing=True) if classifier_uri is None else classifier_uri
-        self.thresholds_uri = get_settings(key='thresholds_uri', sources=('env', settings), raise_on_missing=False) if thresholds_uri is None else thresholds_uri
+class BaseFeatClass(BaseEstimator, ClassifierMixin):
+    def __init__(self, settings={}, check_environment=True, featurizer_uri=None, classifier_uri=None, **kwargs):
+        super(BaseFeatClass, self).__init__(**kwargs)
+
+        sources = ('env', settings) if check_environment else (settings,)
+
+        self.featurizer_uri = get_settings(key='featurizer_uri', sources=sources, raise_on_missing=True) if featurizer_uri is None else featurizer_uri
+        self.classifier_uri = get_settings(key='classifier_uri', sources=sources, raise_on_missing=True) if classifier_uri is None else classifier_uri
 
         with uri_open(self.featurizer_uri, 'rb') as f:
             self.featurizer_ = load_featurizer(f)
 
         with uri_open(self.classifier_uri, 'rb') as f:
             self.classifier_ = load_classifier(f)
-
-        self.thresholds_ = np.full(len(self.classifier_.classes_), 0.5, dtype=np.float)
-        if self.thresholds_uri:
-            with uri_open(self.thresholds_uri) as f:
-                self.thresholds_ = get_thresholds_from_file(f, self.classifier_.classes_)
-
-        self.denominators_ = 2.0 * (1.0 - self.thresholds_)
 
         if 'featurizer_uuid' in kwargs and self.featurizer_.uuid != kwargs['featurizer_uuid']:
             raise TypeError('Featurizer UUID mismatch: {} (this) != {} (<{}>)'.format(kwargs['featurizer_uuid'], self.featurizer_.uuid, self.featurizer_uri))
@@ -41,36 +37,35 @@ class FeaturizerAndClassifier(BaseEstimator, ClassifierMixin):
     #end def
 
     def fit(self, *args, **kwargs):
-        raise NotImplementedError('FeaturizerAndClassifier does not support the `fit` method.')
+        raise NotImplementedError('BaseFeatClass does not support the `fit` method.')
 
     def transform(self, X, **kwargs):
         return self.predict_proba(X, **kwargs)
     #end def
 
     def predict(self, X, **kwargs):
-        X_featurized = self.featurizer_.transform(X)
-        Y_predict = self.classifier_.predict(X_featurized, thresholds=self.thresholds_, denominators=self.denominators_, **kwargs)
+        X_featurized = self.featurizer_.transform(X, **kwargs)
 
-        return Y_predict
-    #end def
-
-    def predict_and_proba(self, X, **kwargs):
-        X_featurized = self.featurizer_.transform(X)
-        return self.classifier_.predict_and_proba(X_featurized, thresholds=self.thresholds_, denominators=self.denominators_, **kwargs)
+        return self.classifier_.predict(X_featurized, **kwargs)
     #end def
 
     def predict_proba(self, X, **kwargs):
-        X_featurized = self.featurizer_.transform(X)
-        Y_proba = self.classifier_.predict_proba(X_featurized, **kwargs)
+        X_featurized = self.featurizer_.transform(X, **kwargs)
 
-        return Y_proba
+        return self.classifier_.predict_proba(X_featurized, **kwargs)
+    #end def
+
+    def predict_and_proba(self, X, **kwargs):
+        X_featurized = self.featurizer_.transform(X, **kwargs)
+
+        return self.classifier_.predict_and_proba(X_featurized, **kwargs)
     #end def
 
     def decision_function(self, X, **kwargs):
         return self.predict_proba(X, **kwargs)
 
     def __str__(self):
-        return 'FeaturizerAndClassifier(featurizer_uri={}, classifier_uri={}, thresholds_uri={})'.format(self.featurizer_uri, self.classifier_uri, self.thresholds_uri)
+        return 'BaseFeatClass(featurizer_uri={}, classifier_uri={}, thresholds_uri={})'.format(self.featurizer_uri, self.classifier_uri, self.thresholds_uri)
     #end def
 #end class
 
@@ -82,7 +77,7 @@ def main():
 
     logging.basicConfig(format=u'%(asctime)-15s [%(name)s-%(process)d] %(levelname)s: %(message)s', level=logging.INFO)
 
-    featclass = FeaturizerAndClassifier(featclass_uri=A.featclass_uri)
+    featclass = BaseFeatClass(featclass_uri=A.featclass_uri)
     print(featclass.transform(np.array([dict(content='this is a tort case. responsibility')]), verbose=0))
     print(featclass.predict_proba(np.array([dict(content='this is a tort case. responsibility')]), rescale=True, verbose=0))
 #end def
