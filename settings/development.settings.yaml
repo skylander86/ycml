@@ -11,3 +11,11 @@ classifier_type: helloworld.classifiers.HelloWorldBinaryLabelsClassifier
 # classifier_type: helloworld.classifiers.HelloWorldMulticlassClassifier
 classifier_parameters:
   pos_label: apple
+
+featclass_type: ycml.featclass.ThresholdingFeatClass
+featclass_parameters:
+  featurizer_uri: models/development.featurizer.gz
+  classifier_uri: models/development.classifier.gz
+  thresholds_uri: settings/development.thresholds.yaml
+
+http_daemon_api_token: secret
