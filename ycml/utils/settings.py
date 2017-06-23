@@ -57,9 +57,13 @@ def save_dictionary_to_file(f, d, *, force_format=None, title='dictionary', **kw
 ENV_SOURCE_KEYS = ['env', 'environment', 'ENV']
 
 
-def get_settings(*source_key_pairs, key=None, sources=None, default=None, raise_on_missing=None, parse_string_func=None, auto_parse=False):
+def get_settings(*source_key_pairs, key=None, keys=None, sources=None, default=None, raise_on_missing=None, parse_string_func=None, auto_parse=False):
+    source_key_pairs = list(source_key_pairs)
     if key and sources:
-        source_key_pairs = list(source_key_pairs) + [(src, key) for src in sources]
+        source_key_pairs += [(src, key) for src in sources]
+
+    if keys and sources:
+        source_key_pairs += [(src, k) for src in sources for k in keys]
 
     for src, key in source_key_pairs:
         v = None
