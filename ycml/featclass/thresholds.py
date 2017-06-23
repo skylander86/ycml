@@ -4,7 +4,7 @@ from .base import BaseFeatClass
 from ..classifiers import ThresholdRescaler
 from ..classifiers import get_thresholds_from_file
 
-from ..utils import uri_open, get_settings
+from ..utils import uri_open
 
 __all__ = ['ThresholdingFeatClass']
 
@@ -12,19 +12,21 @@ logger = logging.getLogger(__name__)
 
 
 class ThresholdingFeatClass(BaseFeatClass):
-    def __init__(self, settings={}, check_environment=True, thresholds_uri=None, **kwargs):
-        super(ThresholdingFeatClass, self).__init__(settings=settings, check_environment=check_environment, **kwargs)
+    def __init__(self, thresholds=None, thresholds_uri=None, **kwargs):
+        super(ThresholdingFeatClass, self).__init__(**kwargs)
 
-        sources = ('env', settings) if check_environment else (settings,)
+        if thresholds is not None and thresholds_uri is not None: raise ValueError('Only one of thresholds/thresholds_uri should be specified.')
 
-        self.thresholds_uri = get_settings(key='thresholds_uri', sources=sources, raise_on_missing=False) if thresholds_uri is None else thresholds_uri
+        self.thresholds_uri = thresholds_uri
 
-        if self.thresholds_uri:
-            with uri_open(self.thresholds_uri) as f:
-                thresholds = get_thresholds_from_file(f, self.classifier_.classes_)
-        else: thresholds = 0.5
+        if thresholds is None:
+            if self.thresholds_uri:
+                with uri_open(self.thresholds_uri) as f:
+                    thresholds = get_thresholds_from_file(f, self.classifier.classes_)
+            else: thresholds = 0.5
+        #end if
 
-        self.rescaler = ThresholdRescaler(thresholds, len(self.classifier_.classes_))
+        self.rescaler = ThresholdRescaler(thresholds, len(self.classifier.classes_))
     #end def
 
     def predict(self, X, **kwargs):
@@ -57,6 +59,6 @@ class ThresholdingFeatClass(BaseFeatClass):
         return self.predict_proba(X, **kwargs)
 
     def __str__(self):
-        return 'ThresholdingFeatClass(featurizer_uri={}, classifier_uri={}, thresholds_uri={})'.format(self.featurizer_uri, self.classifier_uri, self.thresholds_uri)
+        return 'ThresholdingFeatClass(featurizer={}, classifier={}, thresholds_uri={})'.format(self.featurizer, self.classifier, self.thresholds_uri if self.thresholds_uri else self.rescaler.thresholds)
     #end def
 #end class

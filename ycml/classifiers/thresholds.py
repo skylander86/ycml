@@ -10,6 +10,7 @@ class ThresholdRescaler(object):
     def __init__(self, thresholds, n_classes=None):
         if isinstance(thresholds, float): self.thresholds = np.full(n_classes, thresholds)
         elif isinstance(thresholds, (list, tuple)): self.thresholds = np.array(thresholds)
+        else: self.thresholds = thresholds
 
         if self.thresholds.ndim == 2:
             self.thresholds = self.thresholds[:, 0]
@@ -25,7 +26,7 @@ class ThresholdRescaler(object):
     def predict(self, Y_proba):
         Y_predict = np.zeros(Y_proba.shape, dtype=np.bool)
         for i in range(Y_proba.shape[0]):
-            Y_predict[i, :] = Y_proba[i, :] >= self.thresholds
+            Y_predict[i, :] = Y_proba[i, :] > self.thresholds
 
         return Y_predict
     #end def

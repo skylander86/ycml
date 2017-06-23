@@ -39,18 +39,25 @@ class LabelsClassifierMixin(BaseClassifier):
         return self.unbinarize_labels(Y_predict_binarized)
     #end def
 
-    def predict_and_proba(self, X_featurized, *, binarized=True, **kwargs):
+    def predict_and_proba(self, X_featurized, **kwargs):
         Y_proba, Y_predict_binarized = super(LabelsClassifierMixin, self).predict_and_proba(X_featurized, **kwargs)
-        if binarized: return Y_proba, Y_predict_binarized
-
-        return Y_proba, self.unbinarize_labels(Y_predict_binarized)
+        return Y_proba, Y_predict_binarized
     #end def
 
     def binarize_labels(self, Y_labels, **kwargs): raise NotImplementedError('binarize_labels is not implemented.')
 
     def binarize_dicts(self, Y_dicts, *, default=0.0, **kwargs): raise NotImplementedError('binarize_dicts is not implemented.')
 
-    def unbinarize_labels(self, Y_binarized, *, epsilon=0.0, **kwargs): raise NotImplementedError('unbinarize_labels is not implemented.')
+    def unbinarize_labels(self, Y_proba, *, epsilon=1e-5, to_dict=False, astype=float, **kwargs):
+        assert len(self.classes_) == Y_proba.shape[1]
+        unbinarized = np.empty(Y_proba.shape[0], dtype=np.object)
+        for i in range(Y_proba.shape[0]):
+            if to_dict: unbinarized[i] = dict((self.classes_[j], astype(Y_proba[i, j])) for j in range(Y_proba.shape[1]) if Y_proba[i, j] > epsilon)
+            else: unbinarized[i] = [self.classes_[j] for j in range(Y_proba.shape[1]) if Y_proba[i, j] > epsilon]
+        #end for
+
+        return unbinarized
+    #end def
 
     def _filter_labels(self, Y_labels):
         if not self.exclude and not self.include: return Y_labels
@@ -78,21 +85,6 @@ class BinaryLabelsClassifier(LabelsClassifierMixin):
         self.not_pos_label = 'not ' + pos_label if not_pos_label is None else not_pos_label
     #end def
 
-    def predict_and_proba(self, X_featurized, *, binarized=True, **kwargs):
-        Y_proba, Y_predict = super(BinaryLabelsClassifier, self).predict_and_proba(X_featurized, binarized=binarized, **kwargs)
-        if Y_proba.ndim == 1:
-            Y_proba_2d = np.zeros((Y_proba.shape[0], 2), dtype=np.float64)
-            Y_proba_2d[:, 0] = Y_proba
-            Y_proba_2d[:, 1] = 1.0 - Y_proba
-            Y_proba = Y_proba_2d
-        #end if
-
-        if binarized:
-            Y_predict = Y_predict[:, 0]  # must be 0th one coz classes_ only has 1 thing
-
-        return Y_proba, Y_predict
-    #end def
-
     def binarize_labels(self, Y_labels, **kwargs):
         Y_binarized = np.zeros((Y_labels.shape[0], 2))
         for i in range(Y_labels.shape[0]):
@@ -110,18 +102,6 @@ class BinaryLabelsClassifier(LabelsClassifierMixin):
         Y_binarized[:, 0] = 1.0 - Y_binarized[:, 1]
 
         return Y_binarized
-    #end def
-
-    def unbinarize_labels(self, Y_proba, *, epsilon=0.0, to_dict=False, **kwargs):
-        if Y_proba.ndim == 2: Y_proba = Y_proba[:, 1]
-
-        unbinarized = np.empty(Y_proba.shape[0], dtype=np.object)
-        for i in range(Y_proba.shape[0]):
-            if to_dict: unbinarized[i] = dict([(self.classes_[0], 1.0 - float(Y_proba[i])), (self.classes_[1], float(Y_proba[i]))])
-            else: unbinarized[i] = [self.pos_label if Y_proba[i] > 0.5 else self.not_pos_label]
-        #end for
-
-        return unbinarized
     #end def
 
     @property
@@ -160,17 +140,6 @@ class MultiLabelsClassifier(LabelsClassifierMixin):
         #end for
 
         return binarized
-    #end def
-
-    def unbinarize_labels(self, Y_proba, *, epsilon=0.0, to_dict=False, **kwargs):
-        assert len(self.classes_) == Y_proba.shape[1]
-        unbinarized = np.empty(Y_proba.shape[0], dtype=np.object)
-        for i in range(Y_proba.shape[0]):
-            if to_dict: unbinarized[i] = dict((self.classes_[j], float(Y_proba[i, j])) for j in range(Y_proba.shape[1]) if Y_proba[i, j] > epsilon)
-            else: unbinarized[i] = [self.classes_[j] for j in range(Y_proba.shape[1]) if Y_proba[i, j] > epsilon]
-        #end for
-
-        return unbinarized
     #end def
 
     @property

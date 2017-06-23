@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-from importlib import import_module
 import logging
 import sys
 
@@ -10,7 +9,7 @@ from scipy.sparse import issparse
 from tabulate import tabulate
 
 from ..featurizers import load_featurizer, load_featurized, save_featurized
-from ..utils import load_instances, URIFileType, load_dictionary_from_file, get_settings, parse_n_jobs
+from ..utils import load_instances, URIFileType, load_dictionary_from_file, get_settings, parse_n_jobs, get_class_from_module_path
 
 __all__ = []
 
@@ -54,11 +53,7 @@ def main():
     if A.fit:
         if not featurizer_type: parser.error('featurizer_type needs to be specified for fitting.'.format(featurizer_type))
 
-        try: module_path, class_name = featurizer_type.rsplit('.', 1)
-        except ValueError: parser.error('{} is not a valid featurizer. You need to specify the full Python dotted path to the featurizer class.')
-
-        module = import_module(module_path)
-        model_class = getattr(module, class_name)
+        model_class = get_class_from_module_path(featurizer_type)
         if not model_class: parser.error('Unknown featurizer model "{}".'.format(featurizer_type))
 
         featurizer = model_class(**featurizer_parameters)
