@@ -2,8 +2,6 @@ import logging
 
 import numpy as np
 
-from sklearn.preprocessing import label_binarize
-from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import MultiLabelBinarizer
 
 from .base import BaseClassifier
