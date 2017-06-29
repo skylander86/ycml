@@ -1,7 +1,9 @@
 import logging
 
+import numpy as np
+
 from .base import BaseFeatClass
-from ..classifiers import ThresholdRescaler
+from ..classifiers import ThresholdRescaler, BinaryLabelsClassifier
 from ..classifiers import get_thresholds_from_file
 
 from ..utils import uri_open
@@ -23,6 +25,14 @@ class ThresholdingFeatClass(BaseFeatClass):
             if self.thresholds_uri:
                 with uri_open(self.thresholds_uri) as f:
                     thresholds = get_thresholds_from_file(f, self.classifier.classes_)
+
+                if len(self.classifier.classes_) == 2 and not np.isclose(thresholds.sum(), 1.0) and isinstance(self.classifier, BinaryLabelsClassifier):
+                    if thresholds[0] == 0.5: thresholds[0] = 1.0 - thresholds[1]
+                    if thresholds[1] == 0.5: thresholds[1] = 1.0 - thresholds[0]
+
+                    logger.warning('Thresholds were set automatically for BinaryLabelsClassifier to {}={} and {}={}.'.format(self.classifier.classes_[0], thresholds[0], self.classifier.classes_[1], thresholds[1]))
+                #end if
+
             else: thresholds = 0.5
         #end if
 
