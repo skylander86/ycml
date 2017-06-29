@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='ycml',
@@ -20,7 +20,7 @@ setup(
     keywords=['machine learning', 'ml', 'natural language processing', 'nlp', 'utilities'],
     url='http://github.com/skylander86/ycml',
     license='Apache Software License 2.0',
-    packages=['ycml'],
+    packages=find_packages('.'),
     install_requires=[
         'matplotlib>=2.0',
         'numpy>=1.12',
