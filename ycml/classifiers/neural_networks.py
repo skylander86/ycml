@@ -60,6 +60,23 @@ class KerasNNClassifierMixin(object):
         self.set_session(tf_config)
     #end def
 
+    def fit_binarized(self, X_featurized, Y_binarized, **kwargs):
+        setattr(self, self.NN_MODEL_ATTRIBUTE, self.compile_model(**kwargs))
+        self.keras_fit_generator(X_featurized, Y_binarized, **kwargs)
+
+        return self
+    #end def
+
+    def compile_model(self, X_featurized, Y_binarized, **kwargs): raise NotImplementedError('compile_model is not implemented.')
+
+    def _predict_proba(self, X_featurized, batch_size=1024, **kwargs):
+        if X_featurized.shape[0] < batch_size: kwargs.setdefault('verbose', 0)
+
+        Y_proba = self.keras_predict(X_featurized, batch_size=batch_size, **kwargs)
+
+        return Y_proba
+    #end def
+
     def set_session(self, tf_config=None):
         if tf_config is None:
             tf_config = self.tf_config
