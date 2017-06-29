@@ -13,7 +13,7 @@ try: import tensorflow as tf
 except ImportError: tf = None
 
 # We use ycml full paths here so it is easy to copy and paste this code.
-from ycml.utils import get_settings, load_dictionary_from_file, uri_open
+from ycml.utils import get_settings, load_dictionary_from_file, uri_open, URIFileType
 from ycml.featclass import load_featclass
 from ycml.http_daemon.decorators import check_api_token
 
@@ -113,7 +113,8 @@ def create_app(A, file_settings):
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Starts the web daemon for URL classifier API.')
-    parser.add_argument('settings_uri', type=str, nargs='?', metavar='<settings_uri>', help='File containing daemon settings.')
+    parser.add_argument('settings_uri', type=URIFileType(), nargs='?', metavar='<settings_uri>', help='File containing daemon settings.')
+    parser.add_argument('--settings', type=URIFileType(), metavar='<settings_uri>', help='File containing daemon settings.')
     parser.add_argument('--debug', action='store_true', default=False, help='Debug mode.')
     parser.add_argument('-p', '--port', type=int, default=None, metavar='p', help='Port to listen on.', dest='http_daemon_port')
     A = parser.parse_args()
@@ -122,11 +123,21 @@ if __name__ == '__main__':
     logging.getLogger('boto3').setLevel(logging.WARN)
     logging.getLogger('requests').setLevel(logging.WARN)
 
-    settings_uri = get_settings(key='settings_uri', sources=('env', A), raise_on_missing=True)
-    with uri_open(settings_uri) as f:
-        file_settings = load_dictionary_from_file(f)
+    if A.settings: settings_uri = A.settings
+    else: settings_uri = get_settings(key='settings_uri', sources=('env', A), raise_on_missing=True)
 
-    http_daemon_port = int(get_settings(key='http_daemon_port', sources=('env', A, file_settings), default=5000))
+    if isinstance(settings_uri, str): settings_uri = uri_open(settings_uri)
+    file_settings = load_dictionary_from_file(settings_uri)
+    settings_uri.close()
+
+    http_daemon_port = int(get_settings(key='http_daemon_port', sources=('env', A, file_settings)))
+    if http_daemon_port is None:
+        http_daemon_uri = get_settings(key='http_daemon_uri', sources=('env', file_settings), raise_on_missing=True)
+        http_daemon_port = urlparse(http_daemon_uri).port
+    #end if
+
+    if http_daemon_port is None:
+        http_daemon_port = 5000
 
     app = create_app(A, file_settings)
     app.run(debug=A.debug, host='0.0.0.0', use_reloader=False, port=http_daemon_port)
