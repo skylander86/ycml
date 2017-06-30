@@ -15,33 +15,39 @@ __all__ = ['load_instances', 'shuffle_instances']
 logger = logging.getLogger(__name__)
 
 
-def load_instances(instance_files, labels_field='labels', limit=None):
+def load_instances(instance_files, labels_field='labels', limit=None, progress_interval=None):
     total_count = 0
     labels_freq = Counter()
     for f in instance_files:
         freq = Counter()
         count = 0
         timer = Timer()
-        for lineno, line in enumerate(f, start=1):
-            o = json.loads(line)
 
-            if labels_field is None:
-                yield o
-            else:
-                labels = o.get(labels_field)
-                if labels is not None:
-                    del o[labels_field]
-                    if labels: freq.update(labels)
-                    else: freq['<none>'] += 1
+        try:
+            for lineno, line in enumerate(f, start=1):
+                o = json.loads(line)
+
+                if labels_field is None:
+                    yield o
+                else:
+                    labels = o.get(labels_field)
+                    if labels is not None:
+                        del o[labels_field]
+                        if labels: freq.update(labels)
+                        else: freq['<none>'] += 1
+                    #end if
+
+                    yield (o, labels)
                 #end if
 
-                yield (o, labels)
-            #end if
+                count += 1
+                total_count += 1
+                if progress_interval and count % progress_interval == 0: logger.debug('{} instances read from <{}> so far.'.format(count, f.name))
+                if limit and total_count == limit: break
+            #end for
+        except EOFError as e: logger.exception('Exception while reading instances. Will skip the remaining of <{}>.'.format(f.name))
+        #end try
 
-            count += 1
-            total_count += 1
-            if limit and total_count == limit: break
-        #end for
         logger.info('{} instances read from file <{}> {}.'.format(count, f.name, timer))
 
         if labels_field:
