@@ -72,6 +72,7 @@ def main():
         Y_proba = o['Y_proba']
         Y_true_binarized = o['Y_true_binarized']
         thresholds = o['thresholds']
+        if thresholds.dtype == np.object: thresholds = None
         labels = o['labels']
 
         if A.thresholds: thresholds = get_thresholds_from_file(A.thresholds, labels)
