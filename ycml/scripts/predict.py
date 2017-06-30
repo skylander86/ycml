@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from itertools import islice
 import json
 import logging
 import sys
@@ -29,35 +30,47 @@ def main():
     log_format = get_settings(key='log_format', sources=(A, 'env', file_settings), default='%(asctime)-15s [%(name)s-%(process)d] %(levelname)s: %(message)s')
     logging.basicConfig(format=log_format, level=logging.getLevelName(log_level))
 
-    instances = list(load_instances([A.instances], labels_field=None))
     if A.featclass: featclass = load_featclass(settings=load_dictionary_from_file(A.featclass))
     else: featclass = load_featclass(settings=file_settings, uri=get_settings(key='featclass_uri', sources=('env', file_settings)))
 
-    X = np.array(instances, dtype=np.object)
-    logger.info('Predicting {} instances...'.format(X.shape[0]))
-    if A.probabilities:
-        Y_proba, Y_predict = featclass.predict_and_proba(X)
-        Y_proba_dicts = featclass.classifier.unbinarize_labels(Y_proba, to_dict=True)
-    else:
-        Y_predict = featclass.predict(X)
-        Y_proba_dicts = None
-    #end if
+    count = 0
+    for instances in _grouper(load_instances([A.instances], labels_field=None), 10000):
+        X = np.array(instances, dtype=np.object)
+        if A.probabilities:
+            Y_proba, Y_predict = featclass.predict_and_proba(X)
+            Y_proba_dicts = featclass.classifier.unbinarize_labels(Y_proba, to_dict=True)
+        else:
+            Y_predict = featclass.predict(X)
+            Y_proba_dicts = None
+        #end if
 
-    Y_predict_list = featclass.classifier.unbinarize_labels(Y_predict, to_dict=False)
-    Y_predict, Y_proba = None, None
+        Y_predict_list = featclass.classifier.unbinarize_labels(Y_predict, to_dict=False)
+        Y_predict, Y_proba = None, None
 
-    for i in range(X.shape[0]):
-        o = X[i]
-        o['prediction'] = Y_predict_list[i]
-        if Y_proba_dicts: o['probabilities'] = Y_proba_dicts[i]
+        for i in range(X.shape[0]):
+          o = X[i]
+          o['prediction'] = Y_predict_list[i]
+          if Y_proba_dicts: o['probabilities'] = Y_proba_dicts[i]
 
-        A.output.write(json.dumps(o))
-        A.output.write('\n')
+          A.output.write(json.dumps(o))
+          A.output.write('\n')
 
-        if (i + 1) % 100000 == 0: logger.info('Saved {} predictions.'.format(i + 1))
+          count += 1
+
+          if count % 100000 == 0: logger.info('Saved {} predictions.'.format(count))
+        #end for
     #end for
+    logger.info('Saved {} predictions to <{}>.'.format(count, A.output.name))
+#end def
 
-    logger.info('Saved {} predictions to <{}>.'.format(X.shape[0], A.output.name))
+
+def _grouper(iterable, n):
+    it = iter(iterable)
+    while True:
+       chunk = tuple(islice(it, n))
+       if not chunk:
+           return
+       yield chunk
 #end def
 
 
