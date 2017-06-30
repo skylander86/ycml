@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 import json
 import logging
-import sys
 
 import numpy as np
 
@@ -18,7 +17,6 @@ def main():
     parser.add_argument('-s', '--settings', type=URIFileType(), metavar='<settings_file>', help='Settings file to configure models.')
     parser.add_argument('instances', type=URIFileType('r'), metavar='<instances>', help='Instances to use for prediction.')
     parser.add_argument('--featclass', type=URIFileType(), metavar='<featclass_uri>', help='Featclass configuration file to use for prediction.')
-    parser.add_argument('-o', '--output', type=URIFileType('w'), metavar='<prediction_file>', default=sys.stdout.buffer, help='Save results of prediction here.')
     parser.add_argument('-p', '--probabilities', action='store_true', help='Also save prediction probabilities.')
 
     A = parser.parse_args()
@@ -34,6 +32,7 @@ def main():
     else: featclass = load_featclass(settings=file_settings, uri=get_settings(key='featclass_uri', sources=('env', file_settings)))
 
     X = np.array(instances, dtype=np.object)
+    logger.info('Predicting {} instances...'.format(X.shape[0]))
     if A.probabilities:
         Y_proba, Y_predict = featclass.predict_and_proba(X)
         Y_proba_dicts = featclass.classifier.unbinarize_labels(Y_proba, to_dict=True)
@@ -43,13 +42,15 @@ def main():
     #end if
 
     Y_predict_list = featclass.classifier.unbinarize_labels(Y_predict, to_dict=False)
+    Y_predict, Y_proba = None, None
 
     for i in range(X.shape[0]):
         o = X[i]
         o['prediction'] = Y_predict_list[i]
         if Y_proba_dicts: o['probabilities'] = Y_proba_dicts[i]
-
         print(json.dumps(o))
+
+        if (i + 1) % 100000 == 0: logger.info('Saved {} predictions.'.format(i + 1))
     #end for
 
     logger.info('Saved {} predictions to <{}>.'.format(X.shape[0], A.output.name))
