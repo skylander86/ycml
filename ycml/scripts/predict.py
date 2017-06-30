@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import json
 import logging
+import sys
 
 import numpy as np
 
@@ -18,6 +19,7 @@ def main():
     parser.add_argument('instances', type=URIFileType('r'), metavar='<instances>', help='Instances to use for prediction.')
     parser.add_argument('--featclass', type=URIFileType(), metavar='<featclass_uri>', help='Featclass configuration file to use for prediction.')
     parser.add_argument('-p', '--probabilities', action='store_true', help='Also save prediction probabilities.')
+    parser.add_argument('-o', '--output', type=URIFileType('w'), default=sys.stdout.buffer, help='Save predictions to this file.')
 
     A = parser.parse_args()
 
@@ -48,7 +50,9 @@ def main():
         o = X[i]
         o['prediction'] = Y_predict_list[i]
         if Y_proba_dicts: o['probabilities'] = Y_proba_dicts[i]
-        print(json.dumps(o))
+
+        A.output.write(json.dumps(o))
+        A.output.write('\n')
 
         if (i + 1) % 100000 == 0: logger.info('Saved {} predictions.'.format(i + 1))
     #end for
