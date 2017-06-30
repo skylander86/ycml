@@ -34,7 +34,7 @@ def main():
     else: featclass = load_featclass(settings=file_settings, uri=get_settings(key='featclass_uri', sources=('env', file_settings)))
 
     count = 0
-    for instances in _grouper(load_instances([A.instances], labels_field=None), 10000):
+    for instances in _grouper(load_instances([A.instances], labels_field=None), 100000):
         X = np.array(instances, dtype=np.object)
         if A.probabilities:
             Y_proba, Y_predict = featclass.predict_and_proba(X)
