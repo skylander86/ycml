@@ -18,7 +18,7 @@ class ThresholdRescaler(object):
         if self.thresholds.ndim != 1: raise ValueError('`thresholds` should be a 1D array.')
 
         if n_classes is None: n_classes = self.thresholds.shape[0]
-        else: assert n_classes == thresholds.shape[0]
+        else: assert n_classes == self.thresholds.shape[0]
 
         self.denominators = 2.0 * (1.0 - self.thresholds)
     #end def
