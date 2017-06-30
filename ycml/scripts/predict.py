@@ -50,7 +50,7 @@ def main():
         for i in range(X.shape[0]):
           o = X[i]
           o['prediction'] = Y_predict_list[i]
-          if Y_proba_dicts: o['probabilities'] = Y_proba_dicts[i]
+          if Y_proba_dicts is not None: o['probabilities'] = Y_proba_dicts[i]
 
           A.output.write(json.dumps(o))
           A.output.write('\n')
