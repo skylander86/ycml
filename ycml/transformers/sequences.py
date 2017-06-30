@@ -9,10 +9,10 @@ logger = logging.getLogger(__name__)
 
 
 class TokensToIndexTransformer(PureTransformer):
-    def __init__(self, ignore_unknown=False, pad_sequences=None, count_vectorizer_args={}, pad_sequences_args={}, **kwargs):
+    def __init__(self, skip_unknown=False, pad_sequences=None, count_vectorizer_args={}, pad_sequences_args={}, **kwargs):
         super(TokensToIndexTransformer, self).__init__(**kwargs)
 
-        self.ignore_unknown = ignore_unknown
+        self.skip_unknown = skip_unknown
         self.pad_sequences = pad_sequences
         self.count_vectorizer_args = count_vectorizer_args
         self.pad_sequences_args = pad_sequences_args
@@ -31,16 +31,15 @@ class TokensToIndexTransformer(PureTransformer):
 
         analyzer = self.count_vectorizer_.build_analyzer()
         V = self.vocabulary_
-        unknown_index = 1 if self.ignore_unknown else len(V)
 
         X_transformed = []
         for seq in X:
             indexes = []
             for j, tok in enumerate(analyzer(seq)):
-                index = V.get(tok, unknown_index)
+                index = V.get(tok)
 
-                if index >= 0:
-                    indexes.append(index)
+                if not self.skip_unknown: indexes.append(0 if index is None else (index + 1))
+                elif index is not None: indexes.append(index)
             #end for
 
             X_transformed.append(indexes)
@@ -69,6 +68,6 @@ class TokensToIndexTransformer(PureTransformer):
     def __repr__(self):
         count_vectorizer_repr = '{}(vocabulary_={}, stop_words_={})'.format(self.count_vectorizer_.__class__.__name__, len(getattr(self.count_vectorizer_, 'vocabulary_', [])), len(getattr(self.count_vectorizer_, 'stop_words_', []))) if hasattr(self, 'count_vectorizer_') else None
 
-        return '{}(ignore_unknown={}, pad_sequences={}, count_vectorizer_args={}, pad_sequences_args={}, count_vectorizer_={})'.format(self.__class__.__name__, self.ignore_unknown, self.pad_sequences, self.count_vectorizer_args, self.pad_sequences_args, count_vectorizer_repr)
+        return '{}(skip_unknown={}, pad_sequences={}, count_vectorizer_args={}, pad_sequences_args={}, count_vectorizer_={})'.format(self.__class__.__name__, self.skip_unknown, self.pad_sequences, self.count_vectorizer_args, self.pad_sequences_args, count_vectorizer_repr)
     #end def
 #end class
