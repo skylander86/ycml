@@ -68,9 +68,9 @@ def _grouper(iterable, n):
     it = iter(iterable)
     while True:
        chunk = tuple(islice(it, n))
-       if not chunk:
-           return
+       if not chunk: return
        yield chunk
+    #end while
 #end def
 
 
