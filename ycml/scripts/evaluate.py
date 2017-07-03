@@ -114,7 +114,7 @@ def main():
     if A.best_thresholds:
         best_thresholds = find_best_thresholds(Y_true_binarized, Y_proba, target_names=labels)
         if A.clip_thresholds:
-            best_thresholds.clip(A.clip_thresholds[0], A.clip_thresholds[1])
+            best_thresholds = best_thresholds.clip(A.clip_thresholds[0], A.clip_thresholds[1])
             logger.info('Best threshold values clipped to [{}, {}].'.format(*A.clip_thresholds))
         #end if
 
@@ -125,7 +125,7 @@ def main():
     if A.minprec_thresholds:
         minprec_thresholds = find_best_thresholds(Y_true_binarized, Y_proba, precision_thresholds=A.min_precision, target_names=labels)
         if A.clip_thresholds:
-            minprec_thresholds.clip(A.clip_thresholds[0], A.clip_thresholds[1])
+            minprec_thresholds = minprec_thresholds.clip(A.clip_thresholds[0], A.clip_thresholds[1])
             logger.info('Min-precision threshold values clipped to [{}, {}].'.format(*A.clip_thresholds))
         #end if
 
