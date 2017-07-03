@@ -74,23 +74,13 @@ def shuffle_instances(X, Y, *, limit=None):
 
 def main():
     parser = ArgumentParser(description='Quick utility for getting instance information.')
-    parser.add_argument('instances', type=URIFileType(encoding='ascii'), nargs='+', metavar='<instances>', help='List of instance files to get information about.')
+    parser.add_argument('instances', type=URIFileType(mode='r', encoding='ascii'), nargs='+', metavar='<instances>', help='List of instance files to get information about.')
+    parser.add_argument('-l', '--label-key', type=str, metavar='<key>', default='labels', help='The key name for the label.')
     A = parser.parse_args()
 
     logging.basicConfig(format='%(asctime)-15s [%(name)s-%(process)d] %(levelname)s: %(message)s', level=logging.INFO)
 
-    labels_freq = Counter()
-    for f in A.instances:
-        X, Y_labels = list(zip(*load_instances([f], labels_field='labels')))
-        freq = Counter(label for labels in Y_labels for label in labels)
-        freq['<none>'] = sum(1 for labels in Y_labels if not labels)
-
-        logger.info('Label frequencies for <{}>:\n{}'.format(f.name, tabulate(freq.most_common() + [('Labels total', sum(freq.values())), ('Cases total', len(X))], headers=('Label', 'Freq'), tablefmt='psql')))
-        labels_freq += freq
-    #end for
-
-    if len(A.instances) > 1:
-        logger.info('Total label frequencies:\n{}'.format(tabulate(labels_freq.most_common() + [('Labels total', sum(labels_freq.values())), ('Cases total', len(X))], headers=('Label', 'Freq'), tablefmt='psql')))
+    list(load_instances(A.instances, labels_field=A.label_key))
 #end def
 
 
