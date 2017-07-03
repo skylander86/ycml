@@ -47,6 +47,10 @@ def create_app(A, file_settings):
         current_app.logger.setLevel(logging.getLevelName(log_level))
     #end with
 
+    @app.route('/', methods=['GET', 'POST'])
+    def index():
+        return 'Toto, I\'ve a feeling we\'re not in Kansas anymore.', 404
+
     @app.route('/api/<api_token>/ping', methods=['GET'])
     @check_api_token
     def api_ping():
@@ -92,7 +96,7 @@ def create_app(A, file_settings):
                 Y_proba = np.multiply(Y_proba, Y_predict)  # zeros out non predicted values
 
             if probabilities: Y, astype, epsilon = Y_proba, float, 0.0
-            else: Y, astype, epsilon = Y_predict, bool, -1.0
+            else: Y, astype, epsilon = Y_predict, bool, 0.0
 
             if hasattr(model.classifier, 'unbinarize_labels'): unbinarized = model.classifier.unbinarize_labels(Y, to_dict=True, astype=astype, epsilon=epsilon)
             else: unbinarized = [dict((j, astype(Y[i, j])) for j in range(Y.shape[1]) if Y[i, j] > epsilon) for i in range(Y.shape[0])]
@@ -108,6 +112,14 @@ def create_app(A, file_settings):
     #end def
 
     return app
+#end def
+
+
+def gunicorn_app():
+    settings_uri = get_settings(key='settings_uri', sources=('env',), raise_on_missing=True)
+    file_settings = load_dictionary_from_file(settings_uri)
+
+    return create_app({}, file_settings)
 #end def
 
 
@@ -130,14 +142,11 @@ if __name__ == '__main__':
     file_settings = load_dictionary_from_file(settings_uri)
     settings_uri.close()
 
-    http_daemon_port = int(get_settings(key='http_daemon_port', sources=('env', A, file_settings)))
+    http_daemon_port = get_settings(key='http_daemon_port', sources=('env', A, file_settings))
     if http_daemon_port is None:
         http_daemon_uri = get_settings(key='http_daemon_uri', sources=('env', file_settings), raise_on_missing=True)
         http_daemon_port = urlparse(http_daemon_uri).port
-    #end if
-
-    if http_daemon_port is None:
-        http_daemon_port = 5000
+    else: http_daemon_port = int(http_daemon_port)
 
     app = create_app(A, file_settings)
     app.run(debug=A.debug, host='0.0.0.0', use_reloader=False, port=http_daemon_port)
