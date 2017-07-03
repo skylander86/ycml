@@ -51,6 +51,12 @@ def create_app(A, file_settings):
         current_app.logger.setLevel(logging.getLevelName(log_level))
     #end with
 
+    @app.before_first_request
+    def add_flask_logger_for_production():
+        if not current_app.debug:
+            current_app.logger.addHandler(logging.StreamHandler())
+    #end def
+
     @app.route('/', methods=['GET', 'POST'])
     def index():
         return 'Toto, I\'ve a feeling we\'re not in Kansas anymore.', 404
