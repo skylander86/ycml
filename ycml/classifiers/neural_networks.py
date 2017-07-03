@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 import shutil
 from tempfile import NamedTemporaryFile
@@ -69,10 +70,11 @@ class KerasNNClassifierMixin(object):
 
     def compile_model(self, X_featurized, Y_binarized, **kwargs): raise NotImplementedError('compile_model is not implemented.')
 
-    def _predict_proba(self, X_featurized, batch_size=1024, **kwargs):
-        if X_featurized.shape[0] < batch_size: kwargs.setdefault('verbose', 0)
+    def _predict_proba(self, X_featurized, batch_size=1024, use_generator=False, **kwargs):
+        if X_featurized.shape[0] < batch_size: kwargs['verbose'] = 0
 
-        Y_proba = self.keras_predict(X_featurized, batch_size=batch_size, **kwargs)
+        if use_generator or X_featurized.shape[0] > batch_size: Y_proba = self.keras_predict_generator(X_featurized, batch_size=batch_size, **kwargs)
+        else: Y_proba = self.keras_predict(X_featurized, batch_size=batch_size, **kwargs)
 
         return Y_proba
     #end def
@@ -160,33 +162,59 @@ class KerasNNClassifierMixin(object):
         return True
     #end def
 
-    def _generator(self, X, Y, *, batch_size=128):
+    def _generator(self, X, Y, *, batch_size=128, shuffle=True):
         N = X.shape[0]
         if batch_size > N: raise ValueError('batch_size ({}) is > than number of instances ({}).'.format(batch_size, N))
 
-        shuffled_indexes = np.random.permutation(N)
-        X_shuffled, Y_shuffled = X[shuffled_indexes, :], Y[shuffled_indexes]
+        sparse_X = sps.issparse(X)
+        if Y is None: batch_sized_zeros = np.zeros(batch_size)
+
+        if shuffle:
+            shuffled_indexes = np.random.permutation(N)
+            X_shuffled = X[shuffled_indexes, ...]
+            if Y is not None: Y_shuffled = Y[shuffled_indexes]
+        else: X_shuffled, Y_shuffled = X, Y
+
         cur = 0
         while True:
-            if cur + batch_size >= N:
-                shuffled_indexes = np.random.permutation(N)
-                X_shuffled, Y_shuffled = X[shuffled_indexes, :], Y[shuffled_indexes]
+            if cur + batch_size > N:
+                if shuffle:
+                    shuffled_indexes = np.random.permutation(N)
+                    X_shuffled = X[shuffled_indexes, :]
+                    if Y is not None: Y_shuffled = Y[shuffled_indexes]
+                #end if
+
                 cur = 0
             #end if
 
-            if sps.issparse(X): yield (X_shuffled[cur:cur + batch_size, :].todense(), Y_shuffled[cur:cur + batch_size])
-            else: yield (X_shuffled[cur:cur + batch_size, :], Y_shuffled[cur:cur + batch_size])
+            X_batch = X_shuffled[cur:cur + batch_size, ...].todense() if sparse_X else X_shuffled[cur:cur + batch_size, ...]
+            Y_batch = batch_sized_zeros if Y is None else Y_shuffled[cur:cur + batch_size]
+
+            yield (X_batch, Y_batch)
 
             cur += batch_size
         #end while
     #end def
 
-    def keras_predict(self, X_featurized, *, nn_model=None, **kwargs):
+    def keras_predict(self, X, *, nn_model=None, **kwargs):
         if nn_model is None: nn_model = getattr(self, self.NN_MODEL_ATTRIBUTE)
+
         batch_size = kwargs.pop('batch_size', self.batch_size)
         verbose = kwargs.pop('verbose', self.verbose)
 
-        return nn_model.predict(X_featurized, batch_size=batch_size, verbose=verbose, **kwargs)
+        return nn_model.predict_proba(X.todense() if sps.issparse(X) else X, batch_size=batch_size, verbose=verbose, **kwargs)
+    #end def
+
+    def keras_predict_generator(self, X, *, nn_model=None, **kwargs):
+        if nn_model is None: nn_model = getattr(self, self.NN_MODEL_ATTRIBUTE)
+
+        N = X.shape[0]
+
+        batch_size = kwargs.pop('batch_size', self.batch_size)
+        verbose = kwargs.pop('verbose', self.verbose)
+        steps = int(math.ceil(N / batch_size))
+
+        return nn_model.predict_generator(self._generator(X, None, batch_size=batch_size, shuffle=False), steps=steps, verbose=verbose)[:N, ...]
     #end def
 
     def build_callbacks(self):
