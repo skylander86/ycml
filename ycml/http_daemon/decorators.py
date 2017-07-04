@@ -1,8 +1,8 @@
+__all__ = ['check_api_token']
+
 from functools import wraps
 
 from flask import current_app, abort
-
-__all__ = ['check_api_token']
 
 
 def check_api_token(f):

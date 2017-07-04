@@ -1,7 +1,9 @@
+__all__ = ['CounterHashingVectorizer', 'ListHashingVectorizer', 'ListCountVectorizer', 'SpaceTokenizerTransformer']
+
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
 
-__all__ = ['CounterHashingVectorizer', 'ListHashingVectorizer', 'ListCountVectorizer']
+from .base import PureTransformer
 
 
 def _list_analyzer(L):
@@ -38,4 +40,10 @@ class CounterHashingVectorizer(HashingVectorizer):
         kwargs.setdefault('analyzer', _counter_analyzer)
         super(CounterHashingVectorizer, self).__init__(**kwargs)
     #end def
+#end class
+
+
+class SpaceTokenizerTransformer(PureTransformer):
+    def transform_one(self, text):
+        return text.split()
 #end class

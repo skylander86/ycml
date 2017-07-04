@@ -1,10 +1,10 @@
+__all__ = ['parse_n_jobs']
+
 import logging
 from multiprocessing import cpu_count
 import re
 
 logger = logging.getLogger(__name__)
-
-__all__ = ['parse_n_jobs']
 
 
 def parse_n_jobs(s):

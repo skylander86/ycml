@@ -1,7 +1,6 @@
-from importlib import import_module
-
-
 __all__ = ['get_class_from_module_path']
+
+from importlib import import_module
 
 
 def get_class_from_module_path(path):

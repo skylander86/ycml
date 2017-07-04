@@ -1,6 +1,7 @@
 """
 This module provides wrapper function for transparently handling files regardless of location (local, cloud, etc).
 """
+__all__ = ['uri_open', 'uri_to_tempfile', 'uri_read', 'uri_dump', 'uri_exists', 'get_uri_metadata', 'uri_exists_wait', 'URIFileType', 'URIType']
 
 from contextlib import contextmanager
 import gzip
@@ -22,8 +23,6 @@ except ImportError: boto3 = None
 
 try: import requests
 except ImportError: requests = None
-
-__all__ = ['uri_open', 'uri_to_tempfile', 'uri_read', 'uri_dump', 'uri_exists', 'get_uri_metadata', 'uri_exists_wait', 'URIFileType', 'URIType']
 
 logger = logging.getLogger(__name__)
 

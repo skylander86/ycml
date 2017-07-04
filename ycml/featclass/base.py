@@ -1,3 +1,5 @@
+__all__ = ['BaseFeatClass', 'load_featclass']
+
 from argparse import ArgumentParser
 import logging
 
@@ -9,8 +11,6 @@ from ..classifiers import load_classifier
 from ..featurizers import load_featurizer
 
 from ..utils import uri_open, get_settings, load_dictionary_from_file, get_class_from_module_path
-
-__all__ = ['BaseFeatClass', 'load_featclass']
 
 logger = logging.getLogger(__name__)
 

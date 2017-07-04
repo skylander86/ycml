@@ -1,3 +1,5 @@
+__all__ = ['load_instances', 'shuffle_instances']
+
 from argparse import ArgumentParser
 from collections import Counter
 import json
@@ -9,8 +11,6 @@ from tabulate import tabulate
 
 from .uriutils import URIFileType
 from .timer import Timer
-
-__all__ = ['load_instances', 'shuffle_instances']
 
 logger = logging.getLogger(__name__)
 

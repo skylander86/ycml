@@ -1,9 +1,9 @@
+__all__ = ['TokensToIndexTransformer']
+
 import logging
 
 from .base import PureTransformer
 from .text import ListCountVectorizer
-
-__all__ = ['TokensToIndexTransformer']
 
 logger = logging.getLogger(__name__)
 

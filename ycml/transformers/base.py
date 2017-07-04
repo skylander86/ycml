@@ -1,3 +1,5 @@
+__all__ = ['PureTransformer', 'identity']
+
 import logging
 
 import numpy as np
@@ -5,9 +7,6 @@ import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 
 from ..utils import Timer
-
-__all__ = ['PureTransformer', 'identity']
-
 
 logger = logging.getLogger(__name__)
 

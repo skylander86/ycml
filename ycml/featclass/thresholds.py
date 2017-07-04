@@ -1,3 +1,5 @@
+__all__ = ['ThresholdingFeatClass']
+
 import logging
 
 import numpy as np
@@ -7,8 +9,6 @@ from ..classifiers import ThresholdRescaler, BinaryLabelsClassifier
 from ..classifiers import get_thresholds_from_file
 
 from ..utils import uri_open
-
-__all__ = ['ThresholdingFeatClass']
 
 logger = logging.getLogger(__name__)
 

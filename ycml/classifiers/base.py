@@ -1,3 +1,5 @@
+__all__ = ['BaseClassifier', 'load_classifier']
+
 from io import BytesIO
 from datetime import datetime
 import logging
@@ -11,8 +13,6 @@ from sklearn.exceptions import NotFittedError
 
 from ..utils import Timer
 from ..utils import parse_n_jobs
-
-__all__ = ['BaseClassifier', 'load_classifier']
 
 logger = logging.getLogger(__name__)
 

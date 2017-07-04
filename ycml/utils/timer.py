@@ -1,6 +1,6 @@
-import time
-
 _all__ = ['Timer']
+
+import time
 
 
 class Timer(object):

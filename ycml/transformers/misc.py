@@ -1,6 +1,6 @@
-from . import PureTransformer
-
 __all__ = ['DictExtractionTransformer']
+
+from . import PureTransformer
 
 
 class DictExtractionTransformer(PureTransformer):

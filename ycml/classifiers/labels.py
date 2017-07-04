@@ -1,3 +1,5 @@
+__all__ = ['BinaryLabelsClassifier', 'MultiLabelsClassifier', 'MulticlassLabelsClassifier']
+
 import logging
 
 import numpy as np
@@ -5,8 +7,6 @@ import numpy as np
 from sklearn.preprocessing import MultiLabelBinarizer
 
 from .base import BaseClassifier
-
-__all__ = ['BinaryLabelsClassifier', 'MultiLabelsClassifier', 'MulticlassLabelsClassifier']
 
 logger = logging.getLogger(__name__)
 
