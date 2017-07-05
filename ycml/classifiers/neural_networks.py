@@ -131,7 +131,13 @@ class KerasNNClassifierMixin(object):
 
         if generator_func is None: generator_func = self._generator
 
-        return nn_model.fit_generator(generator_func(X_train, Y_train, batch_size=self.batch_size), steps_per_epoch=steps_per_epoch, epochs=self.epochs, verbose=self.verbose, callbacks=self.build_callbacks(), validation_data=validation_data, initial_epoch=self.initial_epoch, **fit_args)
+        return nn_model.fit_generator(
+            generator_func(X_train, Y_train, batch_size=self.batch_size),
+            validation_data=validation_data,
+            initial_epoch=self.initial_epoch,
+            steps_per_epoch=steps_per_epoch, epochs=self.epochs, verbose=self.verbose, callbacks=self.build_callbacks(),
+            **fit_args
+        )
     #end def
 
     def _pre_fit_setup(self, nn_model, *, resume=None, **kwargs):
