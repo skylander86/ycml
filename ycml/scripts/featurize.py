@@ -84,14 +84,15 @@ def main():
                 ('UUID', featurizer_uuid),
                 ('Featurized at', str(featurized_at) + ' UTC'),
             ]
+            feature_count = X_featurized.shape[1] if X_featurized.ndim >= 2 else 1
             if issparse(X_featurized):
                 info_table += [
                     ('Matrix type', 'Sparse'),
-                    ('Matrix dimensions', '{}x{} ({:,} active features)'.format(X_featurized.shape[0], X_featurized.shape[1], len(X_featurized.data))),
-                    ('Matrix sparsity', '{:.3f}%'.format(len(X_featurized.data) / (X_featurized.shape[0] * X_featurized.shape[1]) * 100.0)),
+                    ('Matrix dimensions', '{}x{} ({:,} active features)'.format(X_featurized.shape[0], feature_count, len(X_featurized.data))),
+                    ('Matrix sparsity', '{:.3f}%'.format(len(X_featurized.data) / (X_featurized.shape[0] * feature_count) * 100.0)),
                 ]
             else:
-                info_table += [('Matrix type', 'Dense'), ('Matrix dimensions', '{}x{}'.format(X_featurized.shape[0], X_featurized.shape[1]))]
+                info_table += [('Matrix type', 'Dense'), ('Matrix dimensions', '{}x{}'.format(X_featurized.shape[0], feature_count))]
             #end if
 
             logger.info('Featurizer info for <{}>:\n{}'.format(f.name, tabulate(info_table, headers=('Key', 'Value'), tablefmt='psql')))
@@ -128,7 +129,7 @@ def main():
             else: logger.info('Using "{}" as key for ID field.'.format(id_key))
 
             X_meta = np.array([dict(id=X[i][id_key]) for i in shuffled_indexes], dtype=np.object)
-            save_featurized(A.output, X_featurized=X_featurized[shuffled_indexes, :], Y_labels=Y_labels[shuffled_indexes], X_meta=X_meta, featurizer_uuid=featurizer.uuid_)
+            save_featurized(A.output, X_featurized=X_featurized[shuffled_indexes, ...], Y_labels=Y_labels[shuffled_indexes], X_meta=X_meta, featurizer_uuid=featurizer.uuid_)
         #end if
     #end if
 #end def
