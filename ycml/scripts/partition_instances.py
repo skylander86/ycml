@@ -18,13 +18,13 @@ def main():
     parser = ArgumentParser(description='Script to partition instances in a stratified manner.')
     parser.add_argument('-i', '--instances', type=URIFileType('r'), nargs='+', metavar='<instances>', help='List of instance files to partition.')
     parser.add_argument('-l', '--label-key', type=str, metavar='<key>', default='labels', help='The key name for the label.')
-    parser.add_argument('-s', '--train-size', type=float, required=True, default=0.7, metavar='<N>', help='Proportions of instances to use for training set.')
+    parser.add_argument('-s', '--train-size', type=float, default=0.7, metavar='<N>', help='Proportions of instances to use for training set.')
     parser.add_argument('-o', '--output', type=URIFileType('w'), nargs=2, required=True, metavar='<output>', help='Save partitioned instances here.')
     A = parser.parse_args()
 
     logging.basicConfig(format='%(asctime)-15s [%(name)s-%(process)d] %(levelname)s: %(message)s', level=logging.INFO)
 
-    X, Y_labels = load_instances(A.instances, labels_field=A.label_key)
+    X, Y_labels = zip(*load_instances(A.instances, labels_field=A.label_key))
 
     X_train, X_test = train_test_split(X, train_size=A.train_size, stratify=Y_labels)
 
