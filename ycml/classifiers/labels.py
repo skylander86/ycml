@@ -162,8 +162,8 @@ class MulticlassLabelsClassifier(MultiLabelsClassifier):
 
 def filter_labels(Y_labels, *, include=[], exclude=[]):
     if not exclude and not include: return Y_labels
-    if include: logger.debug('Included labels: {}'.format(', '.join(include)))
-    if exclude: logger.debug('Excluded labels: {}'.format(', '.join(exclude)))
+    if include: logger.debug('Included labels: {}'.format(', '.join(sorted(include))))
+    if exclude: logger.debug('Excluded labels: {}'.format(', '.join(sorted(exclude))))
 
     Y_labels_filtered = np.empty(Y_labels.shape, dtype=np.object)
     removed_labels = 0

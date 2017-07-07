@@ -20,9 +20,9 @@ class PureTransformer(BaseEstimator, TransformerMixin):
         self.nparray_dtype = nparray_dtype
     #end def
 
-    def fit(self, X, y=None, **fit_params): return self
+    def fit(self, *args, **fit_params): return self
 
-    def transform(self, X, **kwargs):
+    def transform(self, X, *args, **kwargs):
         timer = Timer()
         transformed = self._transform(X, **kwargs)
         if self.nparray:

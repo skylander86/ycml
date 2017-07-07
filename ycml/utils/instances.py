@@ -51,7 +51,6 @@ def load_instances(instance_files, labels_field='labels', display_threshold=None
                 else:
                     labels = o.get(labels_field)
                     if labels is not None:
-                        del o[labels_field]
                         if labels: freq.update(labels)
                         else: freq['<none>'] += 1
                     #end if
