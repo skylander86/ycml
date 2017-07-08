@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 def uri_open(uri, mode='rb', encoding='utf-8', use_gzip='auto', io_args={}, urifs_args={}):
     o = urlparse(uri)
-    if o.scheme not in ['', 'file', 's3']: raise Exception('Unknown URI scheme {}'.format(o.scheme))
+    if o.scheme not in ['', 'file', 's3', 'http', 'https']: raise Exception('Unknown URI scheme {}'.format(o.scheme))
     elif o.scheme == 's3' and boto3 is None: raise Exception('S3 is not supported. You will need to install boto3.')
     elif o.scheme in ['http', 'https'] and requests is None: raise Exception('{} is not supported. You will need to install requests.'.format(o.scheme.upper()))
 

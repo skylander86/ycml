@@ -19,7 +19,6 @@ from sklearn.model_selection import train_test_split
 
 from ..utils import Timer, uri_to_tempfile
 
-
 __all__ = ['KerasNNClassifierMixin', 'keras_f1_score', 'EarlyStopping']
 
 logger = logging.getLogger(__name__)
