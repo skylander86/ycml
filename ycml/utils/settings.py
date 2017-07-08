@@ -1,3 +1,5 @@
+__all__ = ['load_dictionary_from_file', 'save_dictionary_to_file', 'get_settings', 'bulk_get_settings']
+
 import json
 import logging
 import os
@@ -7,8 +9,6 @@ try: import yaml
 except ImportError: pass
 
 from .uriutils import uri_open
-
-__all__ = ['load_dictionary_from_file', 'save_dictionary_to_file', 'get_settings', 'bulk_get_settings']
 
 logger = logging.getLogger(__name__)
 

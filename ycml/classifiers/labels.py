@@ -1,3 +1,5 @@
+__all__ = ['BinaryLabelsClassifier', 'MultiLabelsClassifier', 'MulticlassLabelsClassifier', 'filter_labels']
+
 import logging
 
 import numpy as np
@@ -5,8 +7,6 @@ import numpy as np
 from sklearn.preprocessing import MultiLabelBinarizer
 
 from .base import BaseClassifier
-
-__all__ = ['BinaryLabelsClassifier', 'MultiLabelsClassifier', 'MulticlassLabelsClassifier']
 
 logger = logging.getLogger(__name__)
 
@@ -58,22 +58,6 @@ class LabelsClassifierMixin(BaseClassifier):
 
         return unbinarized
     #end def
-
-    def _filter_labels(self, Y_labels):
-        if not self.exclude and not self.include: return Y_labels
-        if self.include: logger.debug('Included labels: {}'.format(', '.join(self.include)))
-        if self.exclude: logger.debug('Excluded labels: {}'.format(', '.join(self.exclude)))
-
-        Y_labels_filtered = np.empty(Y_labels.shape, dtype=np.object)
-        removed_labels = 0
-        for i in range(Y_labels.shape[0]):
-            Y_labels_filtered[i] = [l for l in Y_labels[i] if (l in self.include or not self.include) and l not in self.exclude]
-            removed_labels += len(Y_labels[i]) - len(Y_labels_filtered[i])
-        #end for
-        if removed_labels: logger.info('{} label-instances removed from the training data.'.format(removed_labels))
-
-        return Y_labels_filtered
-    #end def
 #end def
 
 
@@ -112,7 +96,7 @@ class BinaryLabelsClassifier(LabelsClassifierMixin):
 
 class MultiLabelsClassifier(LabelsClassifierMixin):
     def _fit(self, X, Y_labels, **kwargs):
-        Y_labels_filtered = self._filter_labels(Y_labels)
+        Y_labels_filtered = filter_labels(Y_labels, include=self.include, exclude=self.exclude)
         self.label_binarizer_ = MultiLabelBinarizer(sparse_output=False).fit(Y_labels_filtered)
         logger.info('{} labels found in training instances.'.format(len(self.classes_)))
 
@@ -129,7 +113,7 @@ class MultiLabelsClassifier(LabelsClassifierMixin):
 
     def binarize_dicts(self, Y_dicts, *, default=0.0, **kwargs):
         binarized = np.fill((Y_dicts.shape[0], len(self.classes_)), default, dtype=np.float)
-        classes_map = dict((c, i) for i, c in enumerate(self.clsases_))
+        classes_map = dict((c, i) for i, c in enumerate(self.classes_))
 
         for i in range(Y_dicts.shape[0]):
             d = Y_dicts[i]
@@ -151,20 +135,43 @@ class MultiLabelsClassifier(LabelsClassifierMixin):
 
 class MulticlassLabelsClassifier(MultiLabelsClassifier):
     def _fit(self, X, Y_labels, **kwargs):
-        Y_labels_filtered = self._filter_labels(Y_labels)
-        if any(len(Y_labels_filtered[i]) > 1 for i in range(Y_labels_filtered.shape[0])):
-            logger.warning('Some of Y_labels contain more than 1 labels but this is a multiclass classifier. Only the first labels will be used.')
-        Y_labels_filtered = np.array([Y_labels_filtered[i][0] if Y_labels_filtered[i] else '<none>' for i in range(Y_labels_filtered.shape[0])])
-
+        Y_labels_filtered = self._filter_and_check_labels(Y_labels)
         return super(MulticlassLabelsClassifier, self)._fit(X, Y_labels_filtered, **kwargs)
     #end def
 
     def binarize_labels(self, Y_labels, **kwargs):
+        Y_labels_filtered = self._filter_and_check_labels(Y_labels)
+
+        return super(MulticlassLabelsClassifier, self).binarize_labels(Y_labels_filtered, **kwargs)
+    #end def
+
+    def _filter_and_check_labels(self, Y_labels):
+        Y_labels_filtered = filter_labels(Y_labels, include=self.include, exclude=self.exclude)
         if any(len(Y_labels[i]) > 1 for i in range(Y_labels.shape[0])):
             logger.warning('Some of Y_labels contain more than 1 labels but this is a multiclass classifier. Only the first labels will be used.')
 
-        Y_labels_filtered = np.array([Y_labels[i][0] if Y_labels[i] else '<none>' for i in range(Y_labels.shape[0])])
-
-        return super(MulticlassLabelsClassifier, self)._fit(Y_labels_filtered, **kwargs)
+        return np.array([[Y_labels_filtered[i][0]] if Y_labels_filtered[i] else ['<none>'] for i in range(Y_labels_filtered.shape[0])])
     #end def
+
+    @property
+    def classes_(self):
+        return self.label_binarizer_.classes_
+    #end def
+#end def
+
+
+def filter_labels(Y_labels, *, include=[], exclude=[]):
+    if not exclude and not include: return Y_labels
+    if include: logger.debug('Included labels: {}'.format(', '.join(sorted(include))))
+    if exclude: logger.debug('Excluded labels: {}'.format(', '.join(sorted(exclude))))
+
+    Y_labels_filtered = np.empty(Y_labels.shape, dtype=np.object)
+    removed_labels = 0
+    for i in range(Y_labels.shape[0]):
+        Y_labels_filtered[i] = [l for l in Y_labels[i] if (l in include or not include) and l not in exclude]
+        removed_labels += len(Y_labels[i]) - len(Y_labels_filtered[i])
+    #end for
+    if removed_labels: logger.info('{} label-instances removed from the data.'.format(removed_labels))
+
+    return Y_labels_filtered
 #end def

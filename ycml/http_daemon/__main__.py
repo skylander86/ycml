@@ -17,6 +17,10 @@ from ycml.utils import get_settings, load_dictionary_from_file, uri_open, URIFil
 from ycml.featclass import load_featclass
 from ycml.http_daemon.decorators import check_api_token
 
+logging.getLogger('botocore').setLevel(logging.WARN)
+logging.getLogger('boto3').setLevel(logging.WARN)
+logging.getLogger('requests').setLevel(logging.WARN)
+
 
 def create_app(A, file_settings):
     log_level = get_settings(key='log_level', sources=('env', file_settings), default='INFO').upper()
@@ -46,6 +50,16 @@ def create_app(A, file_settings):
 
         current_app.logger.setLevel(logging.getLevelName(log_level))
     #end with
+
+    @app.before_first_request
+    def add_flask_logger_for_production():
+        if not current_app.debug:
+            current_app.logger.addHandler(logging.StreamHandler())
+    #end def
+
+    @app.route('/', methods=['GET', 'POST'])
+    def index():
+        return 'Toto, I\'ve a feeling we\'re not in Kansas anymore.', 404
 
     @app.route('/api/<api_token>/ping', methods=['GET'])
     @check_api_token
@@ -92,7 +106,7 @@ def create_app(A, file_settings):
                 Y_proba = np.multiply(Y_proba, Y_predict)  # zeros out non predicted values
 
             if probabilities: Y, astype, epsilon = Y_proba, float, 0.0
-            else: Y, astype, epsilon = Y_predict, bool, -1.0
+            else: Y, astype, epsilon = Y_predict, bool, 0.0
 
             if hasattr(model.classifier, 'unbinarize_labels'): unbinarized = model.classifier.unbinarize_labels(Y, to_dict=True, astype=astype, epsilon=epsilon)
             else: unbinarized = [dict((j, astype(Y[i, j])) for j in range(Y.shape[1]) if Y[i, j] > epsilon) for i in range(Y.shape[0])]
@@ -111,6 +125,16 @@ def create_app(A, file_settings):
 #end def
 
 
+def gunicorn_app(environ, start_response):
+    settings_uri = get_settings(key='settings_uri', sources=('env',), raise_on_missing=True)
+    file_settings = load_dictionary_from_file(settings_uri)
+
+    app = create_app({}, file_settings)
+
+    return app(environ, start_response)
+#end def
+
+
 if __name__ == '__main__':
     parser = ArgumentParser(description='Starts the web daemon for URL classifier API.')
     parser.add_argument('settings_uri', type=URIFileType(), nargs='?', metavar='<settings_uri>', help='File containing daemon settings.')
@@ -118,10 +142,6 @@ if __name__ == '__main__':
     parser.add_argument('--debug', action='store_true', default=False, help='Debug mode.')
     parser.add_argument('-p', '--port', type=int, default=None, metavar='p', help='Port to listen on.', dest='http_daemon_port')
     A = parser.parse_args()
-
-    logging.getLogger('botocore').setLevel(logging.WARN)
-    logging.getLogger('boto3').setLevel(logging.WARN)
-    logging.getLogger('requests').setLevel(logging.WARN)
 
     if A.settings: settings_uri = A.settings
     else: settings_uri = get_settings(key='settings_uri', sources=('env', A), raise_on_missing=True)
@@ -138,6 +158,7 @@ if __name__ == '__main__':
 
     if http_daemon_port is None:
         http_daemon_port = 5000
+
     http_daemon_port = int(http_daemon_port)
 
     app = create_app(A, file_settings)

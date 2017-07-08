@@ -1,3 +1,5 @@
+__all__ = ['classification_report', 'find_best_thresholds', 'generate_pr_curves']
+
 import logging
 import os
 
@@ -16,8 +18,6 @@ from sklearn.metrics import precision_recall_fscore_support
 from tabulate import tabulate
 
 from .uriutils import uri_open
-
-__all__ = ['classification_report', 'find_best_thresholds', 'generate_pr_curves']
 
 logger = logging.getLogger(__name__)
 

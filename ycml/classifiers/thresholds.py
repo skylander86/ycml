@@ -1,9 +1,8 @@
+__all__ = ['ThresholdRescaler', 'get_thresholds_from_file']
+
 import numpy as np
 
 from ..utils import load_dictionary_from_file
-
-
-__all__ = ['ThresholdRescaler', 'get_thresholds_from_file']
 
 
 class ThresholdRescaler(object):

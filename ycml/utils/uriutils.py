@@ -1,6 +1,7 @@
 """
 This module provides wrapper function for transparently handling files regardless of location (local, cloud, etc).
 """
+__all__ = ['uri_open', 'uri_to_tempfile', 'uri_read', 'uri_dump', 'uri_exists', 'get_uri_metadata', 'uri_exists_wait', 'URIFileType', 'URIType']
 
 from contextlib import contextmanager
 import gzip
@@ -23,8 +24,6 @@ except ImportError: boto3 = None
 try: import requests
 except ImportError: requests = None
 
-__all__ = ['uri_open', 'uri_to_tempfile', 'uri_read', 'uri_dump', 'uri_exists', 'get_uri_metadata', 'uri_exists_wait', 'URIFileType', 'URIType']
-
 logger = logging.getLogger(__name__)
 
 
@@ -43,10 +42,13 @@ def uri_open(uri, mode='rb', encoding='utf-8', use_gzip='auto', io_args={}, urif
         if o.scheme == 's3':
             r = s3_client.get_object(Bucket=o.netloc, Key=o.path.lstrip('/'), **urifs_args)
             fileobj = BytesIO(r['Body'].read())  # future: Add support for local temp file
+            setattr(fileobj, 'name', uri)
 
         elif o.scheme in ['http', 'https']:
             r = requests.get(uri)
             fileobj = BytesIO(r.content)
+            setattr(fileobj, 'name', uri)
+
             if not binary_mode and not use_gzip: encoding = r.encoding
 
         elif not o.scheme or o.scheme == 'file':

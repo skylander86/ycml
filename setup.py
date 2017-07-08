@@ -1,4 +1,9 @@
 from setuptools import setup, find_packages
+import sys
+
+if sys.version_info.major < 3:
+    raise Exception('This is a Python 3 only package. Please upgrade.')
+#end if
 
 setup(
     name='ycml',
