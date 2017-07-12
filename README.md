@@ -6,6 +6,14 @@ Documentation is sparse because this is mostly for my own personal use. Sorry!
 
 See [helloworld](helloworld) for a sample ML project template.
 
+## Use
+
+To use it in your files, add
+
+    git+https://github.com/skylander86/ycml.git@v0.1.1#egg=ycml
+
+to your `requirements.txt`.
+
 ## Development Tips
 
 In your app, do
