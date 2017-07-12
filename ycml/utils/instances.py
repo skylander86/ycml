@@ -72,7 +72,6 @@ def load_instances(instance_files, labels_field='labels', display_threshold=None
 
         if labels_field:
             labels_freq += freq
-            print(list(_filter_display(freq.most_common())))
             logger.info('Label frequencies for <{}>:\n{}'.format(f.name, tabulate(list(_filter_display(freq.most_common())) + [('Labels total', sum(freq.values())), ('Total', total_count)], headers=('Label', 'Freq'), tablefmt='psql')))
         #end if
 
