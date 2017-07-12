@@ -25,7 +25,7 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
         logger.info('Using n_jobs={} for <{}>.'.format(self.n_jobs, self.name))
     #end def
 
-    def fit(self, X, Y, **kwargs):
+    def fit(self, X, Y, validation_data=None, **kwargs):
         self.uuid_ = str(uuid4())
         logger.debug('{} UUID is {}.'.format(self.name, self.uuid_))
 
