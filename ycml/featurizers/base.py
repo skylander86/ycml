@@ -48,7 +48,7 @@ class BaseFeaturizer(Pipeline):
         X_featurized = super(BaseFeaturizer, self).fit_transform(X)
         logger.info('Done fitting {} {}.'.format(type(self).__name__, timer))
 
-        self._post_fit()
+        self._post_fit(X, X_featurized)
 
         return X_featurized
     #end def
