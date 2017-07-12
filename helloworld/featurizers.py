@@ -1,9 +1,9 @@
+__all__ = ['HelloWorldFeaturizer']
+
 import numpy as np
 
 from ycml.featurizers import BaseFeaturizer
 from ycml.transformers import PureTransformer
-
-__all__ = ['HelloWorldFeaturizer', 'FEATURIZERS_MAP']
 
 
 class RandomFeatures(PureTransformer):
@@ -22,8 +22,3 @@ class HelloWorldFeaturizer(BaseFeaturizer):
         self.feature_dims = feature_dims
     #end def
 #end class
-
-
-FEATURIZERS_MAP = {
-    'HelloWorldFeaturizer': HelloWorldFeaturizer
-}

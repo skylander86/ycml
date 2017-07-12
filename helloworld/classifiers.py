@@ -1,10 +1,10 @@
+__all__ = ['HelloWorldBinaryLabelsClassifier', 'HelloWorldMultiLabelsClassifier']
+
 import numpy as np
 
 from sklearn.svm import SVC
 
 from ycml.classifiers import BinaryLabelsClassifier, MultiLabelsClassifier, MulticlassLabelsClassifier
-
-__all__ = ['HelloWorldBinaryLabelsClassifier', 'HelloWorldMultiLabelsClassifier']
 
 
 class HelloWorldBinaryLabelsClassifier(BinaryLabelsClassifier):
