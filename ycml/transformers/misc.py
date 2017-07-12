@@ -1,4 +1,4 @@
-__all__ = ['DictExtractionTransformer', 'DictListExtractionTransformer']
+__all__ = ['DictExtractionTransformer', 'DictListExtractionTransformer', 'FunctionTransformer']
 
 from . import PureTransformer
 
@@ -37,25 +37,21 @@ class DictListExtractionTransformer(PureTransformer):
 
     def __init__(self, key=None, default=None, **kwargs):
         super(DictListExtractionTransformer, self).__init__(**kwargs)
-        self.set_params(key=key, default=default)
-    #end def
 
-    def get_params(self, deep=True):
-        params = super(DictListExtractionTransformer, self).get_params(deep=deep)
-        params['key'] = getattr(self, 'key', None)
-        params['default'] = getattr(self, 'default', None)
-
-        return params
-    #end def
-
-    def set_params(self, **kwargs):
-        super(DictListExtractionTransformer, self).set_params(**kwargs)
-
-        self.key = kwargs.pop('key', None)
-        self.default = kwargs.pop('default', None)
-
-        return self
+        self.key = key
+        self.default = default
     #end def
 
     def transform_one(self, L): return [d.get(self.key, self.default) for d in L]
+#end class
+
+
+class FunctionTransformer(PureTransformer):
+    def __init__(self, func, **kwargs):
+        super(FunctionTransformer, self).__init__(**kwargs)
+        self.func = func
+    #end def
+
+    def transform_one(self, x):
+        return self.func(x)
 #end class
