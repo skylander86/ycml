@@ -73,6 +73,36 @@ class BaseFeaturizer(Pipeline):
         return self.uuid_
     #end def
 
+    def find(self, path):
+        """Make it easier to find deep within a pipeline using filesystem like paths, i.e., `self.find('all_context_features/2/listcountvectorizer')`."""
+
+        components = path.split('/')
+        cur = self
+        for name in components:
+            if hasattr(cur, 'named_steps'):
+                cur = cur.named_steps[name]
+
+            elif hasattr(cur, 'transformer_list'):
+                try:
+                    i = int(name)
+                    cur = cur.transformer_list[i][1]
+                except ValueError:
+                    for i in range(len(cur.transformer_list)):
+                        if cur.transformer_list[i][0] == name:
+                            cur = cur.transformer_list[i][1]
+                            break
+                        #end if
+                    #end for
+
+                    raise ValueError('Cannot find transformer with name "{}" in {}.'.format(name, cur))
+                #end try
+
+            else: raise TypeError('Unknown featurizer component type {}.'.format(repr(cur)))
+        #end for
+
+        return cur
+    #end def
+
     def _post_fit(self, *args, **kwargs): return self
 #end def
 
