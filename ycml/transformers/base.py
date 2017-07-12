@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # Helper class. A transformer that only does transformation and does not need to fit any internal parameters.
 class PureTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, nparray=True, nparray_dtype=None, **kwargs):
-        super(PureTransformer, self).__init__(**kwargs)
+        super(PureTransformer, self).__init__()
 
         self.nparray = nparray
         self.nparray_dtype = nparray_dtype
