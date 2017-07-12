@@ -1,13 +1,21 @@
-__all__ = ['CounterHashingVectorizer', 'ListHashingVectorizer', 'ListCountVectorizer', 'SpaceTokenizerTransformer']
+__all__ = ['CounterHashingVectorizer', 'ListHashingVectorizer', 'ListCountVectorizer', 'ListNGramAnalyzer', 'ListTfidfVectorizer', 'SpaceTokenizerTransformer']
+
+import logging
 
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 from .base import PureTransformer
 
+logger = logging.getLogger(__name__)
 
-class ListNGramAnalyzer(object):
+
+class ListNGramAnalyzer(PureTransformer):
     def __init__(self, ngram_range=(1, 1), ngram_delimiter=' ', **kwargs):
+        nparray = kwargs.pop('nparray', False)
+        super(ListNGramAnalyzer, self).__init__(nparray=nparray, **kwargs)
+
         if isinstance(ngram_range, tuple) and len(ngram_range) == 2: ngrams = list(range(ngram_range[0], ngram_range[1] + 1))
         elif isinstance(ngram_range, str): ngrams = [ngram_range]
         else: ngrams = ngram_range
@@ -30,6 +38,9 @@ class ListNGramAnalyzer(object):
             #end for
         #end for
     #end def
+
+    def transform_one(self, tokens):
+        yield from self.__call__(tokens)
 #end def
 
 
@@ -43,8 +54,35 @@ def _counter_analyzer(C):
 class ListCountVectorizer(CountVectorizer):
     def __init__(self, **kwargs):
         kwargs.setdefault('analyzer', ListNGramAnalyzer(**kwargs))
-
         super(ListCountVectorizer, self).__init__(**kwargs)
+    #end def
+
+    def fit(self, *args, **kwargs):
+        super(ListCountVectorizer, self).fit(*args, **kwargs)
+        logger.debug('There are {} vocabulary items in <{}>.'.format(len(self.vocabulary_), self))
+    #end def
+
+    def fit_transform(self, *args, **kwargs):
+        super(ListCountVectorizer, self).fit_transform(*args, **kwargs)
+        logger.debug('There {} vocabulary items in <{}>.'.format(len(self.vocabulary_), self))
+    #end def
+#end class
+
+
+class ListTfidfVectorizer(TfidfVectorizer):
+    def __init__(self, **kwargs):
+        kwargs.setdefault('analyzer', ListNGramAnalyzer(**kwargs))
+        super(ListTfidfVectorizer, self).__init__(**kwargs)
+    #end def
+
+    def fit(self, *args, **kwargs):
+        super(ListTfidfVectorizer, self).fit(*args, **kwargs)
+        logger.debug('There are {} vocabulary items in <{}>.'.format(len(self.vocabulary_), self))
+    #end def
+
+    def fit_transform(self, *args, **kwargs):
+        super(ListTfidfVectorizer, self).fit_transform(*args, **kwargs)
+        logger.debug('There {} vocabulary items in <{}>.'.format(len(self.vocabulary_), self))
     #end def
 #end class
 
