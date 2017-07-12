@@ -145,6 +145,25 @@ class MulticlassLabelsClassifier(MultiLabelsClassifier):
         return super(MulticlassLabelsClassifier, self).binarize_labels(Y_labels_filtered, **kwargs)
     #end def
 
+    @classmethod
+    def multilabel_to_multiclass(cls, Y_multilabel):
+        Y_multiclass = np.zeros(Y_multilabel.shape[0])
+        for j in range(Y_multilabel.shape[1]):
+            Y_multiclass[Y_multilabel[:, j] > 0] = j
+
+        return Y_multiclass
+    #end def
+
+    @classmethod
+    def multiclass_to_multilabel(cls, Y_multiclass, n_classes=None):
+        if n_classes is None: n_classes = np.max(Y_multiclass)
+        Y_multilabel = np.zeros((Y_multiclass.shape[0], n_classes))
+        for j in range(Y_multilabel.shape[1]):
+            Y_multilabel[Y_multiclass == j, j] = 1
+
+        return Y_multiclass
+    #end def
+
     def _filter_and_check_labels(self, Y_labels):
         Y_labels_filtered = filter_labels(Y_labels, include=self.include, exclude=self.exclude)
         if any(len(Y_labels[i]) > 1 for i in range(Y_labels.shape[0])):
