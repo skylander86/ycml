@@ -154,7 +154,12 @@ if __name__ == '__main__':
     if http_daemon_port is None:
         http_daemon_uri = get_settings(key='http_daemon_uri', sources=('env', file_settings), raise_on_missing=True)
         http_daemon_port = urlparse(http_daemon_uri).port
-    else: http_daemon_port = int(http_daemon_port)
+    #end if
+
+    if http_daemon_port is None:
+        http_daemon_port = 5000
+
+    http_daemon_port = int(http_daemon_port)
 
     app = create_app(A, file_settings)
     app.run(debug=A.debug, host='0.0.0.0', use_reloader=False, port=http_daemon_port)
