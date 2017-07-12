@@ -2,6 +2,7 @@ matplotlib
 numpy
 scipy
 scikit-learn
+joblib
 
 tabulate
 pyyaml
