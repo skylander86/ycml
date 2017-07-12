@@ -58,13 +58,17 @@ class ListCountVectorizer(CountVectorizer):
     #end def
 
     def fit(self, *args, **kwargs):
-        super(ListCountVectorizer, self).fit(*args, **kwargs)
+        ret = super(ListCountVectorizer, self).fit(*args, **kwargs)
         logger.debug('There are {} vocabulary items in <{}>.'.format(len(self.vocabulary_), self))
+
+        return ret
     #end def
 
     def fit_transform(self, *args, **kwargs):
-        super(ListCountVectorizer, self).fit_transform(*args, **kwargs)
+        transformed = super(ListCountVectorizer, self).fit_transform(*args, **kwargs)
         logger.debug('There {} vocabulary items in <{}>.'.format(len(self.vocabulary_), self))
+
+        return transformed
     #end def
 #end class
 
@@ -76,13 +80,17 @@ class ListTfidfVectorizer(TfidfVectorizer):
     #end def
 
     def fit(self, *args, **kwargs):
-        super(ListTfidfVectorizer, self).fit(*args, **kwargs)
+        ret = super(ListTfidfVectorizer, self).fit(*args, **kwargs)
         logger.debug('There are {} vocabulary items in <{}>.'.format(len(self.vocabulary_), self))
+
+        return ret
     #end def
 
     def fit_transform(self, *args, **kwargs):
-        super(ListTfidfVectorizer, self).fit_transform(*args, **kwargs)
+        transformed = super(ListTfidfVectorizer, self).fit_transform(*args, **kwargs)
         logger.debug('There {} vocabulary items in <{}>.'.format(len(self.vocabulary_), self))
+
+        return transformed
     #end def
 #end class
 
