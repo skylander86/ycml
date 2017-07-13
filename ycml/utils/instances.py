@@ -48,7 +48,7 @@ def load_instances(instance_files, labels_field='labels', display_threshold=None
             for lineno, line in enumerate(f, start=1):
                 o = json.loads(line)
 
-                if labels_field is None:
+                if labels_field is None or labels_field is False:
                     yield o
                 else:
                     labels = o.get(labels_field)
