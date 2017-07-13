@@ -139,6 +139,21 @@ class MulticlassLabelsClassifier(MultiLabelsClassifier):
         return super(MulticlassLabelsClassifier, self)._fit(X, Y_labels_filtered, **kwargs)
     #end def
 
+    def predict(self, X_featurized, **kwargs):
+        return self.predict_and_proba(X_featurized, **kwargs)[1]
+    #end def
+
+    def predict_and_proba(self, X_featurized, **kwargs):
+        Y_proba = self.predict_proba(X_featurized, **kwargs)
+        Y_predict = np.zeros(Y_proba.shape)
+        for i in range(X_featurized.shape[0]):
+            j = np.argmax(Y_proba[i, :])
+            Y_predict[i, j] = 1
+        #end for
+
+        return Y_proba, Y_predict
+    #end def
+
     def binarize_labels(self, Y_labels, **kwargs):
         Y_labels_filtered = self._filter_and_check_labels(Y_labels)
 

@@ -42,13 +42,27 @@ def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, th
         assert ((precision_thresholds <= 1).all() and (precision_thresholds >= 0.0).all())
     #end if
 
+    is_multiclass = all(np.isclose(Y_proba[i, :].sum(), 1.0) for i in range(Y_true.shape[0]))
+    if is_multiclass:
+        Y_predict = np.zeros(Y_proba.shape)
+        for i in range(Y_true.shape[0]):
+            j = np.argmax(Y_proba[i, :])
+            Y_predict[i, j] = 1
+        #end for
+    else:
+        Y_predict = (Y_proba >= 0.5)
+    #end if
+
     table = []
     support_total, ap_score_total = 0.0, 0.0
     thresholds_best = np.zeros(n_classes)
     thresholds_minprec = np.zeros(n_classes)
     for i, name in enumerate(target_names):
         # Results using 0.5 as threshold
-        p, r, f1, _ = precision_recall_fscore_support(Y_true[:, i], (Y_proba[:, i] >= 0.5), average='binary')  # Using thresholds
+        # print(i, np.logical_and(Y_predict[:, i] == 1, Y_true[:, i] == 1).sum())
+        if name == 'positive':
+            print(Y_true[:, i].sum(), Y_predict[:, i].sum())
+        p, r, f1, _ = precision_recall_fscore_support(Y_true[:, i], Y_predict[:, i], average='binary')  # Using default
         support = Y_true[:, i].sum()
         if support == 0: continue
         ap_score = average_precision_score(Y_true[:, i], Y_proba[:, i])
@@ -108,23 +122,23 @@ def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, th
     if order == 'support':
         table.sort(key=lambda row: int(row[1]), reverse=True)
 
-    headers = ['Label', 'Support', 'AP', 'T=0.5']
+    headers = ['Label', 'Support', 'AP', 'Natural']
     if thresholds is not None: headers.append('File T')
     headers.append('Best T')
     if precision_thresholds is not None: headers.append('Min Prec T')
 
     if n_classes > 1:
-        macro_averages = ['Macro average', '-', '{:.3f}'.format(average_precision_score(Y_true, Y_proba, average='macro')), '{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= 0.5, average='macro'))]
+        macro_averages = ['Macro average', '-', '{:.3f}'.format(average_precision_score(Y_true, Y_proba, average='macro')), '{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_predict, average='macro'))]
         if thresholds is not None: macro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds, average='macro')))
         macro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds_best, average='macro')))
         if precision_thresholds is not None: macro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds_minprec, average='macro')))
 
-        micro_averages = ['Micro average', '-', '{:.3f}'.format(average_precision_score(Y_true, Y_proba, average='micro')), '{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= 0.5, average='micro'))]
+        micro_averages = ['Micro average', '-', '{:.3f}'.format(average_precision_score(Y_true, Y_proba, average='micro')), '{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_predict, average='micro'))]
         if thresholds is not None: micro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds, average='micro')))
         micro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds_best, average='micro')))
         if precision_thresholds is not None: micro_averages.append('{:.3f}/{:.3f}/{:.3f}'.format(*precision_recall_fscore_support(Y_true, Y_proba >= thresholds_minprec, average='micro')))
 
-        perfect_set = ['Perfect set', str(Y_true.shape[0]), '-', '{:.3f}'.format(accuracy_score(Y_true, Y_proba >= 0.5))]
+        perfect_set = ['Perfect set', str(Y_true.shape[0]), '-', '{:.3f}'.format(accuracy_score(Y_true, Y_predict))]
         if thresholds is not None: perfect_set.append('{:.3f}'.format(accuracy_score(Y_true, Y_proba >= thresholds)))
         perfect_set.append('{:.3f}'.format(accuracy_score(Y_true, Y_proba >= thresholds_best)))
         if precision_thresholds is not None: perfect_set.append('{:.3f}'.format(accuracy_score(Y_true, Y_proba >= thresholds_minprec)))

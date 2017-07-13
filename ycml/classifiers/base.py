@@ -52,9 +52,7 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
         raise NotImplementedError('_predict_proba is not implemented.')
 
     def predict(self, X_featurized, **kwargs):
-        Y_predict = self.predict_proba(X_featurized) >= 0.5
-
-        return Y_predict
+        return self.predict_and_proba(X_featurized, **kwargs)[1]
     #end def
 
     def predict_and_proba(self, X_featurized, **kwargs):
