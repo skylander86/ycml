@@ -14,14 +14,11 @@ logger = logging.getLogger(__name__)
 
 
 class HyperparameterGridsearchMixin(object):
-    def __init__(self, classifier='sklearn.svm.SVC', classifier_args={}, param_grid={}, metric=accuracy_score, validation_size=0.2, n_jobs=1, **kwargs):
-        super(HyperparameterGridsearchMixin, self).__init__()
-
+    def __init__(self, classifier='sklearn.svm.SVC', classifier_args={}, param_grid={}, metric=accuracy_score, validation_size=0.2, **kwargs):
         self.classifier = classifier
         self.classifier_args = classifier_args
         self.param_grid = param_grid
         self.validation_size = validation_size
-        self.n_jobs = n_jobs
 
         self.metric = metric
         if isinstance(metric, str):
