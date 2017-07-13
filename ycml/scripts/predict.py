@@ -1,15 +1,10 @@
 from argparse import ArgumentParser
-from itertools import islice
 import json
 import logging
 import sys
 
-import numpy as np
-
 from ..utils import load_dictionary_from_file, load_instances, get_settings, URIFileType
 from ..featclass import load_featclass
-
-__all__ = []
 
 logger = logging.getLogger(__name__)
 
@@ -33,44 +28,23 @@ def main():
     if A.featclass: featclass = load_featclass(settings=load_dictionary_from_file(A.featclass))
     else: featclass = load_featclass(settings=file_settings, uri=get_settings(key='featclass_uri', sources=('env', file_settings)))
 
-    count = 0
-    for instances in _grouper(load_instances([A.instances], labels_field=None), 100000):
-        X = np.array(instances, dtype=np.object)
+    for count, args in enumerate(featclass.predictions_generator(load_instances(A.instances, labels_field=None), include_proba=A.probabilities, unbinarized=True), start=1):
         if A.probabilities:
-            Y_proba, Y_predict = featclass.predict_and_proba(X)
-            Y_proba_dicts = featclass.classifier.unbinarize_labels(Y_proba, to_dict=True)
+            o, Y_predict_list, Y_proba_dict = args
+            o['predictions'] = Y_predict_list
+            o['probabilities'] = Y_proba_dict
         else:
-            Y_predict = featclass.predict(X)
-            Y_proba_dicts = None
+            o, Y_predict_list = args
+            o['predictions'] = Y_predict_list
         #end if
 
-        Y_predict_list = featclass.classifier.unbinarize_labels(Y_predict, to_dict=False)
-        Y_predict, Y_proba = None, None
+        A.output.write(json.dumps(o))
+        A.output.write('\n')
 
-        for i in range(X.shape[0]):
-          o = X[i]
-          o['prediction'] = Y_predict_list[i]
-          if Y_proba_dicts is not None: o['probabilities'] = Y_proba_dicts[i]
-
-          A.output.write(json.dumps(o))
-          A.output.write('\n')
-
-          count += 1
-
-          if count % 100000 == 0: logger.info('Saved {} predictions.'.format(count))
-        #end for
+        if count % 100000 == 0: logger.info('Saved {} predictions.'.format(count))
     #end for
+
     logger.info('Saved {} predictions to <{}>.'.format(count, A.output.name))
-#end def
-
-
-def _grouper(iterable, n):
-    it = iter(iterable)
-    while True:
-       chunk = tuple(islice(it, n))
-       if not chunk: return
-       yield chunk
-    #end while
 #end def
 
 

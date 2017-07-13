@@ -10,7 +10,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from ..classifiers import load_classifier
 from ..featurizers import load_featurizer
 
-from ..utils import uri_open, get_settings, load_dictionary_from_file, get_class_from_module_path
+from ..utils import uri_open, get_settings, load_dictionary_from_file, get_class_from_module_path, chunked_iterator
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +69,34 @@ class BaseFeatClass(BaseEstimator, ClassifierMixin):
         X_featurized = self.featurizer.transform(X, **self.transform_args)
 
         return self.classifier.predict_and_proba(X_featurized, **predict_args)
+    #end def
+
+    def predictions_generator(self, instances_generator, *, chunk_size=100000, include_proba=True, unbinarized=True):
+        for chunk in chunked_iterator(instances_generator, chunk_size):
+            X = np.array(chunk, dtype=np.object)
+
+            if include_proba:
+                Y_proba, Y_predict = self.predict_and_proba(X)
+                Y_proba_dicts = self.classifier.unbinarize_labels(Y_proba, to_dict=True)
+            else:
+                Y_predict = self.predict(X)
+                Y_proba_dicts = None
+            #end if
+
+            Y_predict_list = self.classifier.unbinarize_labels(Y_predict, to_dict=False)
+
+            if include_proba:
+                if unbinarized:
+                    yield from ((X[i], Y_predict_list[i], Y_proba_dicts[i]) for i in range(X.shape[0]))
+                else:
+                    yield from ((X[i], Y_predict[i], Y_proba[i]) for i in range(X.shape[0]))
+            else:
+                if unbinarized:
+                    yield from ((X[i], Y_predict_list[i]) for i in range(X.shape[0]))
+                else:
+                    yield from ((X[i], Y_predict[i]) for i in range(X.shape[0]))
+            #end if
+        #end for
     #end def
 
     def decision_function(self, X, **kwargs):
