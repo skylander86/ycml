@@ -95,7 +95,7 @@ def shuffle_instances(X, Y, *, limit=None):
 
 def main():
     parser = ArgumentParser(description='Quick utility for getting instance information.')
-    parser.add_argument('instances', type=URIFileType(mode='r', encoding='ascii'), nargs='+', metavar='<instances>', help='List of instance files to get information about.')
+    parser.add_argument('instances', type=URIFileType(mode='r'), nargs='+', metavar='<instances>', help='List of instance files to get information about.')
     parser.add_argument('-l', '--label-key', type=str, metavar='<key>', default='labels', help='The key name for the label.')
     A = parser.parse_args()
 
