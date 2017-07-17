@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 def main():
     parser = ArgumentParser(description='Featurize instances for ML classification.')
     parser.add_argument('featurizer_type', type=str, metavar='<featurizer_type>', nargs='?', default=None, help='Name of featurizer model to use.')
-    parser.add_argument('-i', '--instances', type=URIFileType('r', encoding='ascii'), nargs='*', default=[], metavar='<instances>', help='List of instance files to featurize.')
+    parser.add_argument('-i', '--instances', type=URIFileType('r'), nargs='*', default=[], metavar='<instances>', help='List of instance files to featurize.')
     parser.add_argument('-o', '--output', type=URIFileType('wb'), metavar='<features_uri>', help='Save featurized instances here.')
     parser.add_argument('-s', '--settings', type=URIFileType(), metavar='<settings_uri>', help='Settings file to configure models.')
     parser.add_argument('--n-jobs', type=int, metavar='<N>', help='No. of processes to use during featurization.')
