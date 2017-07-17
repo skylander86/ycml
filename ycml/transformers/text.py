@@ -1,4 +1,4 @@
-__all__ = ['CounterHashingVectorizer', 'ListHashingVectorizer', 'ListCountVectorizer', 'ListNGramAnalyzer', 'ListTfidfVectorizer', 'SpaceTokenizerTransformer']
+__all__ = ['CounterHashingVectorizer', 'ListHashingVectorizer', 'ListCountVectorizer', 'ListNGramAnalyzer', 'ListTfidfVectorizer', 'SpaceTokenizerTransformer', '_list_analyzer']
 
 import logging
 
@@ -9,6 +9,12 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from .base import PureTransformer
 
 logger = logging.getLogger(__name__)
+
+
+def _list_analyzer(L):
+    for elem in L:
+        yield elem
+#end def
 
 
 class ListNGramAnalyzer(PureTransformer):
