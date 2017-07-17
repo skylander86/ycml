@@ -6,7 +6,7 @@ import os
 import re
 import time
 
-from ..utils import URIFileType
+from uriutils import URIFileType
 
 logger = logging.getLogger(__name__)
 

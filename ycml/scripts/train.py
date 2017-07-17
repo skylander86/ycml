@@ -1,10 +1,10 @@
 from argparse import ArgumentParser
 import logging
 
-from ..featurizers import load_featurized
-from ..utils import load_dictionary_from_file, get_settings, URIFileType, get_class_from_module_path
+from uriutils import URIFileType
 
-__all__ = []
+from ..featurizers import load_featurized
+from ..utils import load_dictionary_from_file, get_settings, get_class_from_module_path
 
 logger = logging.getLogger(__name__)
 

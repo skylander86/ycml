@@ -8,8 +8,10 @@ from scipy.sparse import issparse
 
 from tabulate import tabulate
 
+from uriutils import URIFileType
+
 from ..featurizers import load_featurizer, load_featurized, save_featurized
-from ..utils import load_instances, URIFileType, load_dictionary_from_file, get_settings, parse_n_jobs, get_class_from_module_path
+from ..utils import load_instances, load_dictionary_from_file, get_settings, parse_n_jobs, get_class_from_module_path
 
 __all__ = []
 

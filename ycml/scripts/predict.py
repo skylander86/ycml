@@ -3,7 +3,9 @@ import json
 import logging
 import sys
 
-from ..utils import load_dictionary_from_file, load_instances, get_settings, URIFileType
+from uriutils import URIFileType
+
+from ..utils import load_dictionary_from_file, load_instances, get_settings
 from ..featclass import load_featclass
 
 logger = logging.getLogger(__name__)

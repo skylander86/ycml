@@ -8,8 +8,9 @@ import logging
 
 from sklearn.model_selection import train_test_split
 
+from uriutils import URIFileType
+
 from ycml.utils import load_instances
-from ycml.utils import URIFileType
 
 logger = logging.getLogger(__name__)
 

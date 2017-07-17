@@ -9,7 +9,8 @@ import numpy as np
 
 from tabulate import tabulate
 
-from .uriutils import URIFileType
+from uriutils import URIFileType
+
 from .timer import Timer
 
 logger = logging.getLogger(__name__)

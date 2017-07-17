@@ -6,10 +6,12 @@ import numpy as np
 
 from tabulate import tabulate
 
+from uriutils import URIFileType, URIType
+
 from ..classifiers import load_classifier, get_thresholds_from_file
 from ..featurizers import load_featurized
 from ..utils import classification_report, find_best_thresholds, generate_pr_curves
-from ..utils import get_settings, URIFileType, URIType
+from ..utils import get_settings
 from ..utils import load_dictionary_from_file, save_dictionary_to_file
 
 __all__ = []

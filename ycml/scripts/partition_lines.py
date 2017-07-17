@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 import logging
 import random
 
-from ycml.utils import URIFileType
+from uriutils import URIFileType
 
 logger = logging.getLogger(__name__)
 
