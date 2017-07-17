@@ -12,8 +12,10 @@ import numpy as np
 try: import tensorflow as tf
 except ImportError: tf = None
 
+from uriutils import URIFileType
+
 # We use ycml full paths here so it is easy to copy and paste this code.
-from ycml.utils import get_settings, load_dictionary_from_file, uri_open, URIFileType
+from ycml.utils import get_settings, load_dictionary_from_file
 from ycml.featclass import load_featclass
 from ycml.http_daemon.decorators import check_api_token
 
@@ -146,9 +148,7 @@ if __name__ == '__main__':
     if A.settings: settings_uri = A.settings
     else: settings_uri = get_settings(key='settings_uri', sources=('env', A), raise_on_missing=True)
 
-    if isinstance(settings_uri, str): settings_uri = uri_open(settings_uri)
     file_settings = load_dictionary_from_file(settings_uri)
-    settings_uri.close()
 
     http_daemon_port = get_settings(key='http_daemon_port', sources=('env', A, file_settings))
     if http_daemon_port is None:

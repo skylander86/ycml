@@ -11,9 +11,9 @@ setup(
     author='yc sim',
     author_email='hello@yanchuan.sg',
     description='yc\'s collection of convenience code for developing ML applications.',
-    long_description='This module contains a collection of code I\'ve written over the past years for pretty run-of-the-mill deployments of machine learning projects.',
+    long_description=open('README.md', 'r').read(),
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 2 - Pre-Alpha',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3 :: Only',
         'Natural Language :: English',
@@ -26,14 +26,7 @@ setup(
     url='http://github.com/skylander86/ycml',
     license='Apache Software License 2.0',
     packages=find_packages('.'),
-    install_requires=[
-        'matplotlib>=2.0',
-        'numpy>=1.12',
-        'scipy>=0.19',
-        'scikit-learn>=0.18',
-        'tabulate',
-        'pyyaml',
-    ],
+    install_requires=[line.strip() for line in open('requirements.txt', 'r') if not line.startswith('#') and line.strip()],
     include_package_data=True,
     zip_safe=False,
 )

@@ -10,7 +10,9 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from ..classifiers import load_classifier
 from ..featurizers import load_featurizer
 
-from ..utils import uri_open, get_settings, load_dictionary_from_file, get_class_from_module_path, chunked_iterator
+from uriutils import uri_open
+
+from ..utils import get_settings, load_dictionary_from_file, get_class_from_module_path, chunked_iterator
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +27,10 @@ class BaseFeatClass(BaseEstimator, ClassifierMixin):
         self.transform_args = transform_args
         self.predict_args = predict_args
 
-        with uri_open(featurizer_uri, 'rb') as f:
+        with uri_open(featurizer_uri, mode='rb') as f:
             self.featurizer = load_featurizer(f)
 
-        with uri_open(classifier_uri, 'rb') as f:
+        with uri_open(classifier_uri, mode='rb') as f:
             self.classifier = load_classifier(f)
 
         if 'featurizer_uuid' in kwargs and self.featurizer.uuid != kwargs['featurizer_uuid']:
@@ -112,9 +114,7 @@ def load_featclass(*, settings={}, uri=None, check_environment=True):
     settings_from_uri = {}
 
     if uri is not None:
-        with uri_open(uri) as f:
-            settings_from_uri = load_dictionary_from_file(f)
-    #end if
+        settings_from_uri = load_dictionary_from_file(uri)
 
     sources = ('env', settings_from_uri, settings) if check_environment else (settings_from_uri, settings)
     featclass_type = get_settings(key='featclass_type', sources=sources, raise_on_missing=True)

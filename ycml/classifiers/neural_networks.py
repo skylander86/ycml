@@ -20,7 +20,9 @@ import scipy.sparse as sps
 
 from sklearn.model_selection import train_test_split
 
-from ..utils import Timer, uri_to_tempfile
+from uriutils import uri_open
+
+from ..utils import Timer
 
 logger = logging.getLogger(__name__)
 
@@ -154,8 +156,8 @@ class KerasNNClassifierMixin(object):
         #end if
 
         if self.initial_weights:
-            with uri_to_tempfile(self.initial_weights) as f:
-                nn_model.load_weights(f.name)
+            with uri_open(self.initial_weights, in_memory=False) as f:
+                nn_model.load_weights(f.temp_name)
             logger.info('Loaded initial weights file from <{}> will start at epoch {}.'.format(self.initial_weights, self.initial_epoch))
         #end if
 

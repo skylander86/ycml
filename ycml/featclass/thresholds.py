@@ -8,8 +8,6 @@ from .base import BaseFeatClass
 from ..classifiers import ThresholdRescaler, BinaryLabelsClassifier
 from ..classifiers import get_thresholds_from_file
 
-from ..utils import uri_open
-
 logger = logging.getLogger(__name__)
 
 
@@ -23,8 +21,7 @@ class ThresholdingFeatClass(BaseFeatClass):
 
         if thresholds is None:
             if self.thresholds_uri:
-                with uri_open(self.thresholds_uri) as f:
-                    thresholds = get_thresholds_from_file(f, self.classifier.classes_)
+                thresholds = get_thresholds_from_file(self.thresholds_uri, self.classifier.classes_)
 
                 if len(self.classifier.classes_) == 2 and not np.isclose(thresholds.sum(), 1.0) and isinstance(self.classifier, BinaryLabelsClassifier):
                     if thresholds[0] == 0.5: thresholds[0] = 1.0 - thresholds[1]
