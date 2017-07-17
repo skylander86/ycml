@@ -17,7 +17,8 @@ class ListNGramAnalyzer(PureTransformer):
         super(ListNGramAnalyzer, self).__init__(nparray=nparray, **kwargs)
 
         if isinstance(ngram_range, tuple) and len(ngram_range) == 2: ngrams = list(range(ngram_range[0], ngram_range[1] + 1))
-        elif isinstance(ngram_range, str): ngrams = [ngram_range]
+        elif isinstance(ngram_range, str): ngrams = [int(ngram_range)]
+        elif isinstance(ngram_range, int): ngrams = [ngram_range]
         else: ngrams = ngram_range
         ngrams.sort()
 
