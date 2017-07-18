@@ -32,7 +32,7 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
         self.fitted_at_ = datetime.utcnow()
 
         timer = Timer()
-        self._fit(X, Y, **kwargs)
+        self._fit(X, Y, validation_data=validation_data, **kwargs)
         logger.info('{} fitting on {} instances complete {}.'.format(self.name, X.shape[0], timer))
 
         return self
