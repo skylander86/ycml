@@ -10,7 +10,7 @@ See [helloworld](helloworld) for a sample ML project template.
 
 To use it in your files, add
 
-    git+https://github.com/skylander86/ycml.git@v0.1.1#egg=ycml
+    git+https://github.com/skylander86/ycml.git@v0.1.3#egg=ycml
 
 to your `requirements.txt`.
 
