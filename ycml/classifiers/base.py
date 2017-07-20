@@ -32,7 +32,7 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
         self.fitted_at_ = datetime.utcnow()
 
         timer = Timer()
-        self._fit(X, Y, **kwargs)
+        self._fit(X, Y, validation_data=validation_data, **kwargs)
         logger.info('{} fitting on {} instances complete {}.'.format(self.name, X.shape[0], timer))
 
         return self
@@ -70,7 +70,12 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
 
         with tarfile.open(fileobj=f, mode='w') as tf:
             with BytesIO() as model_f:
-                pickle.dump(self, model_f, protocol=4)
+                try: pickle.dump(self, model_f, protocol=4)
+                except pickle.PicklingError:
+                    logger.error('PicklingError: Did you check to make sure that the classifier mixins (i.e., KerasNNClassifierMixin) is ahead of BaseClassifier in the MRO?')
+                    raise
+                #end try
+
                 model_data = model_f.getvalue()
                 model_f.seek(0)
                 model_tarinfo = tarfile.TarInfo(name='model.pkl')
@@ -82,7 +87,7 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
             self.save_to_tarfile(tf)
         #end with
 
-        f.flush()
+        f.close()
 
         logger.info('{} saved to <{}>.'.format(self, f.name))
 

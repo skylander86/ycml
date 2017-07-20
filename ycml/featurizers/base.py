@@ -27,28 +27,28 @@ class BaseFeaturizer(Pipeline):
         self.n_jobs = n_jobs
     #end def
 
-    def fit(self, *args, **kwargs):
+    def fit(self, X, *args, **kwargs):
         self.uuid_ = str(uuid4())
         logger.debug('{} UUID is {}.'.format(type(self).__name__, self.uuid_))
 
         timer = Timer()
-        super(BaseFeaturizer, self).fit(*args, **kwargs)
+        super(BaseFeaturizer, self).fit(X, *args, **kwargs)
         logger.info('Done fitting {} {}.'.format(type(self).__name__, timer))
 
-        self._post_fit(*args, **kwargs)
+        self._post_fit(X=X, **kwargs)
 
         return self
     #end def
 
-    def fit_transform(self, X):
+    def fit_transform(self, X, *args, **kwargs):
         self.uuid_ = str(uuid4())
         logger.debug('{} UUID is {}.'.format(type(self).__name__, self.uuid_))
 
         timer = Timer()
-        X_featurized = super(BaseFeaturizer, self).fit_transform(X)
+        X_featurized = super(BaseFeaturizer, self).fit_transform(X, *args, **kwargs)
         logger.info('Done fitting {} {}.'.format(type(self).__name__, timer))
 
-        self._post_fit(X, X_featurized)
+        self._post_fit(X=X, X_featurized=X_featurized, **kwargs)
 
         return X_featurized
     #end def
@@ -103,7 +103,7 @@ class BaseFeaturizer(Pipeline):
         return cur
     #end def
 
-    def _post_fit(self, *args, **kwargs): return self
+    def _post_fit(self, **kwargs): return self
 #end def
 
 

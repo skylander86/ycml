@@ -92,6 +92,9 @@ class KerasNNClassifierMixin(object):
 
         tf_session = tf.Session(config=tf_config)
         K.set_session(tf_session)
+
+        init_op = tf.global_variables_initializer()
+        tf_session.run(init_op)
     #end def
 
     def keras_fit(self, X, Y, *, nn_model=None, validation_data=None, resume=None, **fit_args):
@@ -267,7 +270,7 @@ class KerasNNClassifierMixin(object):
 
         fname = None
         try:
-            with NamedTemporaryFile(prefix='ix_aols_issues.', suffix='.h5', delete=False) as f:
+            with NamedTemporaryFile(suffix='.h5', delete=False) as f:
                 timer = Timer()
                 shutil.copyfileobj(tar_file.extractfile('nn_model.h5'), f)
                 fname = f.name
@@ -285,8 +288,14 @@ class KerasNNClassifierMixin(object):
     #end def
 
     def __getstate__(self):
+        state = super(KerasNNClassifierMixin, self).__getstate__()
+
         ignored_attrs = set([self.NN_MODEL_ATTRIBUTE, 'tf_session']) | self.PICKLE_IGNORED_ATTRIBUTES
-        return dict((k, v) for k, v in self.__dict__.items() if k not in ignored_attrs)
+        for k in ignored_attrs:
+            if k in state:
+                del state[k]
+
+        return state
     #end def
 
     @property
