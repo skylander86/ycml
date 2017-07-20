@@ -160,6 +160,11 @@ class MulticlassLabelsClassifier(MultiLabelsClassifier):
         return super(MulticlassLabelsClassifier, self).binarize_labels(Y_labels_filtered, **kwargs)
     #end def
 
+    def multiclassify_labels(self, Y_labels, **kwargs):
+        Y_binarized = self.binarize_labels(Y_labels, **kwargs)
+        return MulticlassLabelsClassifier.multilabel_to_multiclass(Y_binarized)
+    #end def
+
     @classmethod
     def multilabel_to_multiclass(cls, Y_multilabel):
         Y_multiclass = np.zeros(Y_multilabel.shape[0])
