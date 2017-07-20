@@ -59,7 +59,7 @@ def main():
         if not model_class: parser.error('Unknown featurizer model "{}".'.format(featurizer_type))
 
         featurizer = model_class(**featurizer_parameters)
-        X_featurized = featurizer.fit_transform(X)
+        X_featurized = featurizer.fit_transform(X, Y_labels)
         featurizer.save(A.fit)
 
     elif A.featurize:
