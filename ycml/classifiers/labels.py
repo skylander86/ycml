@@ -136,6 +136,14 @@ class MultiLabelsClassifier(LabelsClassifierMixin):
 class MulticlassLabelsClassifier(MultiLabelsClassifier):
     def _fit(self, X, Y_labels, **kwargs):
         Y_labels_filtered = self._filter_and_check_labels(Y_labels)
+        if any(len(Y_labels_filtered[i]) == 0 for i in range(Y_labels_filtered.shape[0])):
+            logger.warning('Some of Y_labels have no labels after filtering but this is a multiclass classifier. A `<none>` label will be created.')
+
+            for i in range(Y_labels_filtered.shape[0]):
+                if not Y_labels_filtered[i]:
+                    Y_labels_filtered[i] = ['<none>']
+        #end if
+
         return super(MulticlassLabelsClassifier, self)._fit(X, Y_labels_filtered, **kwargs)
     #end def
 
@@ -186,10 +194,11 @@ class MulticlassLabelsClassifier(MultiLabelsClassifier):
 
     def _filter_and_check_labels(self, Y_labels):
         Y_labels_filtered = filter_labels(Y_labels, include=self.include, exclude=self.exclude)
+
         if any(len(Y_labels[i]) > 1 for i in range(Y_labels.shape[0])):
             logger.warning('Some of Y_labels contain more than 1 labels but this is a multiclass classifier. Only the first labels will be used.')
 
-        return np.array([[Y_labels_filtered[i][0]] if Y_labels_filtered[i] else ['<none>'] for i in range(Y_labels_filtered.shape[0])])
+        return np.array([[Y_labels_filtered[i][0]] if Y_labels_filtered[i] else [] for i in range(Y_labels_filtered.shape[0])])
     #end def
 
     @property
@@ -204,12 +213,13 @@ def filter_labels(Y_labels, *, include=[], exclude=[]):
     if include: logger.debug('Included labels: {}'.format(', '.join(sorted(include))))
     if exclude: logger.debug('Excluded labels: {}'.format(', '.join(sorted(exclude))))
 
-    Y_labels_filtered = np.empty(Y_labels.shape, dtype=np.object)
+    Y_labels_filtered = []
     removed_labels = 0
     for i in range(Y_labels.shape[0]):
-        Y_labels_filtered[i] = [l for l in Y_labels[i] if (l in include or not include) and l not in exclude]
+        Y_labels_filtered.append([l for l in Y_labels[i] if (l in include or not include) and l not in exclude])
         removed_labels += len(Y_labels[i]) - len(Y_labels_filtered[i])
     #end for
+    Y_labels_filtered = np.array(Y_labels_filtered, dtype=np.object)
     if removed_labels: logger.info('{} label-instances removed from the data.'.format(removed_labels))
 
     return Y_labels_filtered
