@@ -7,8 +7,6 @@ from collections import Counter
 import json
 import logging
 
-import numpy as np
-
 from sklearn.model_selection import train_test_split
 
 from uriutils import URIFileType
@@ -34,7 +32,7 @@ def main():
 
     if any(len(labels) > 1 for labels in Y_labels):
         logger.warn('These are multilabel instances, we will select the most common label for each instance to do stratification.')
-        Y_single_labels = [max(labels, key=lambda l: labels_freq[l]) for labels in Y_labels]
+        Y_single_labels = [max(labels, key=lambda l: labels_freq[l]) if labels else '<none>' for labels in Y_labels]
     else:
         Y_single_labels = Y_labels
     #end for
