@@ -121,13 +121,13 @@ def main():
             #end if
 
             id_key = None
-            for key in ['_id', 'id', 'uuid']:
+            for key in ['_id', 'id', 'id_', 'uuid']:
                 if key in X[0]:
                     id_key = key
                     break
                 #end if
             #end for
-            if not id_key: raise logger.warning('Unable to find ID key in instances.')
+            if not id_key: raise TypeError('Unable to find ID key in instances.')
             else: logger.info('Using "{}" as key for ID field.'.format(id_key))
 
             X_meta = np.array([dict(id=X[i][id_key]) for i in shuffled_indexes], dtype=np.object)
