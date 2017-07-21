@@ -19,9 +19,9 @@ from ycml.utils import get_settings, load_dictionary_from_file
 from ycml.featclass import load_featclass
 from ycml.http_daemon.decorators import check_api_token
 
-logging.getLogger('botocore').setLevel(logging.WARN)
-logging.getLogger('boto3').setLevel(logging.WARN)
-logging.getLogger('requests').setLevel(logging.WARN)
+logging.getLogger('botocore').setLevel(logging.WARNING)
+logging.getLogger('boto3').setLevel(logging.WARNING)
+logging.getLogger('requests').setLevel(logging.WARNING)
 
 
 def create_app(A, file_settings):

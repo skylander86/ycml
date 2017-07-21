@@ -111,7 +111,7 @@ def classification_report(Y_true, Y_proba, *, labels=None, target_names=None, th
 
                 except ValueError:
                     best_f1_i = np.argmax(f1)
-                    logger.warn('Unable to find threshold for label "{}" where precision >= {}.'.format(target_names[i], precision_thresholds[i], t[best_f1_i]))
+                    logger.warning('Unable to find threshold for label "{}" where precision >= {}.'.format(target_names[i], precision_thresholds[i], t[best_f1_i]))
                     row.append('-')
                 #end try
         #end if
@@ -182,7 +182,7 @@ def find_best_thresholds(Y_true, Y_proba, *, labels=None, target_names=None, pre
 
             except ValueError:
                 best_f1_i = np.argmax(f1)
-                logger.warn('Unable to find threshold for label "{}" where precision >= {}. Defaulting to best threshold of {}.'.format(target_names[i], precision_thresholds[i], t[best_f1_i]))
+                logger.warning('Unable to find threshold for label "{}" where precision >= {}. Defaulting to best threshold of {}.'.format(target_names[i], precision_thresholds[i], t[best_f1_i]))
             #end try
 
         #end if
@@ -250,7 +250,7 @@ def generate_pr_curves(Y_true, Y_proba, output_prefix, *, labels=None, target_na
 
                 except ValueError:
                     best_f1_i = np.argmax(f1)
-                    logger.warn('Unable to find threshold for label "{}" where precision >= {}.'.format(target_names[i], precision_thresholds[i], thresholds_[best_f1_i]))
+                    logger.warning('Unable to find threshold for label "{}" where precision >= {}.'.format(target_names[i], precision_thresholds[i], thresholds_[best_f1_i]))
                 #end try
                 p, r, f1_score, thresholds_minprec[i] = precision[best_f1_i], recall[best_f1_i], f1[best_f1_i], thresholds_[best_f1_i]
             #end if

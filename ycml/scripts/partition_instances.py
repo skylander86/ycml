@@ -31,7 +31,7 @@ def main():
     labels_freq = Counter(label for labels in Y_labels for label in labels)
 
     if any(len(labels) > 1 for labels in Y_labels):
-        logger.warn('These are multilabel instances, we will select the most common label for each instance to do stratification.')
+        logger.warning('These are multilabel instances, we will select the most common label for each instance to do stratification.')
         Y_single_labels = [max(labels, key=lambda l: labels_freq[l]) if labels else '<none>' for labels in Y_labels]
     else:
         Y_single_labels = Y_labels
