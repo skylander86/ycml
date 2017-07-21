@@ -56,7 +56,11 @@ def create_app(A, file_settings):
     @app.before_first_request
     def add_flask_logger_for_production():
         if not current_app.debug:
-            current_app.logger.addHandler(logging.StreamHandler())
+            ch = logging.StreamHandler()
+            formatter = logging.Formatter(log_format)
+            ch.setFormatter(formatter)
+            current_app.logger.addHandler(ch)
+        #end if
     #end def
 
     @app.route('/', methods=['GET', 'POST'])

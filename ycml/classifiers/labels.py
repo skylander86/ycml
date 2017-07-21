@@ -32,16 +32,11 @@ class LabelsClassifierMixin(BaseClassifier):
 
     def fit_binarized(self, X_featurized, Y_binarized, **kwargs): raise NotImplementedError('fit_binarized is not implemented.')
 
-    def predict(self, X_featurized, *, binarized=True, **kwargs):
-        Y_predict_binarized = super(LabelsClassifierMixin, self).predict(X_featurized, **kwargs)
-        if binarized: return Y_predict_binarized
-
-        return self.unbinarize_labels(Y_predict_binarized)
-    #end def
-
-    def predict_and_proba(self, X_featurized, **kwargs):
+    def predict_and_proba(self, X_featurized, *, binarize=True, **kwargs):
         Y_proba, Y_predict_binarized = super(LabelsClassifierMixin, self).predict_and_proba(X_featurized, **kwargs)
-        return Y_proba, Y_predict_binarized
+        if binarize: return Y_proba, Y_predict_binarized
+
+        return self.unbinarize_labels(Y_proba, to_dict=True), self.unbinarize_labels(Y_predict_binarized)
     #end def
 
     def binarize_labels(self, Y_labels, **kwargs): raise NotImplementedError('binarize_labels is not implemented.')
@@ -147,19 +142,17 @@ class MulticlassLabelsClassifier(MultiLabelsClassifier):
         return super(MulticlassLabelsClassifier, self)._fit(X, Y_labels_filtered, **kwargs)
     #end def
 
-    def predict(self, X_featurized, **kwargs):
-        return self.predict_and_proba(X_featurized, **kwargs)[1]
-    #end def
-
-    def predict_and_proba(self, X_featurized, **kwargs):
+    def predict_and_proba(self, X_featurized, *, binarize=True, **kwargs):
         Y_proba = self.predict_proba(X_featurized, **kwargs)
-        Y_predict = np.zeros(Y_proba.shape)
+        Y_predict_binarized = np.zeros(Y_proba.shape)
         for i in range(X_featurized.shape[0]):
             j = np.argmax(Y_proba[i, :])
-            Y_predict[i, j] = 1
+            Y_predict_binarized[i, j] = 1
         #end for
 
-        return Y_proba, Y_predict
+        if binarize: return Y_proba, Y_predict_binarized
+
+        return self.unbinarize_labels(Y_proba, to_dict=True), self.unbinarize_labels(Y_predict_binarized)
     #end def
 
     def binarize_labels(self, Y_labels, **kwargs):
