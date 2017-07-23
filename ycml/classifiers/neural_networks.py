@@ -102,11 +102,11 @@ class KerasNNClassifierMixin(object):
 
         if not self._pre_fit_setup(nn_model, resume=resume, **fit_args): return
 
-        if sps.issparse(X): X = X.todense()
-        if sps.issparse(Y): Y = Y.todense()
+        if sps.issparse(X): X = X.toarray()
+        if sps.issparse(Y): Y = Y.toarray()
         if validation_data is not None:
             X_validation, Y_validation = validation_data
-            validation_data = (X_validation.todense() if sps.issparse(X_validation) else X_validation, Y_validation.todense() if sps.issparse(Y_validation) else Y_validation)
+            validation_data = (X_validation.toarray() if sps.issparse(X_validation) else X_validation, Y_validation.toarray() if sps.issparse(Y_validation) else Y_validation)
         #end if
 
         logger.info('{} instances used for training and {} instances used for validation.'.format(Y.shape[0], validation_data[1].shape[0] if validation_data else int(self.validation_size * Y.shape[0])))
@@ -121,11 +121,11 @@ class KerasNNClassifierMixin(object):
 
         if validation_data is None:
             X_train, X_validation, Y_train, Y_validation = train_test_split(X, Y, test_size=self.validation_size)
-            validation_data = (X_validation.todense() if sps.issparse(X_validation) else X_validation, Y_validation.todense() if sps.issparse(Y_validation) else Y_validation)
+            validation_data = (X_validation.toarray() if sps.issparse(X_validation) else X_validation, Y_validation.toarray() if sps.issparse(Y_validation) else Y_validation)
         else:
             X_train, Y_train = X, Y
             X_validation, Y_validation = validation_data
-            validation_data = (X_validation.todense() if sps.issparse(X_validation) else X_validation, Y_validation.todense() if sps.issparse(Y_validation) else Y_validation)
+            validation_data = (X_validation.toarray() if sps.issparse(X_validation) else X_validation, Y_validation.toarray() if sps.issparse(Y_validation) else Y_validation)
         #end if
         N_train = X_train.shape[0]
         logger.info('{} instances used for training and {} instances used for validation.'.format(N_train, validation_data[1].shape[0]))
@@ -197,7 +197,7 @@ class KerasNNClassifierMixin(object):
                 cur = 0
             #end if
 
-            X_batch = X_shuffled[cur:cur + batch_size, ...].todense() if sparse_X else X_shuffled[cur:cur + batch_size, ...]
+            X_batch = X_shuffled[cur:cur + batch_size, ...].toarray() if sparse_X else X_shuffled[cur:cur + batch_size, ...]
             Y_batch = batch_sized_zeros if Y is None else Y_shuffled[cur:cur + batch_size]
 
             yield (X_batch, Y_batch)
@@ -212,7 +212,7 @@ class KerasNNClassifierMixin(object):
         batch_size = kwargs.pop('batch_size', self.batch_size)
         verbose = kwargs.pop('verbose', self.verbose)
 
-        return nn_model.predict_proba(X.todense() if sps.issparse(X) else X, batch_size=batch_size, verbose=verbose)
+        return nn_model.predict_proba(X.toarray() if sps.issparse(X) else X, batch_size=batch_size, verbose=verbose)
     #end def
 
     def keras_predict_generator(self, X, *, nn_model=None, **kwargs):
