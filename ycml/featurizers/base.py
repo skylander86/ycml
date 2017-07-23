@@ -58,6 +58,7 @@ class BaseFeaturizer(Pipeline):
             raise NotFittedError('This featurizer is not fitted yet.')
 
         pickle.dump(self, f, protocol=4)
+        f.close()
         logger.info('Saved {} to <{}>.'.format(self, f.name))
     #end def
 
