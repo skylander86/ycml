@@ -124,6 +124,7 @@ def save_featurized(f, X_featurized, *, Y_labels=None, featurized_at=datetime.ut
     else:
         np.savez_compressed(f, X_featurized=X_featurized, Y_labels=Y_labels, featurized_at=featurized_at, **kwargs)  # Always use compression
     #end if
+    f.close()
 
     logger.info('Saved {} featurized instances and its metadata to <{}>.'.format(X_featurized.shape[0], f.name))
 #end def
