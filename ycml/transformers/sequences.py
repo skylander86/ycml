@@ -18,7 +18,7 @@ class TokensToIndexTransformer(PureTransformer):
         self.pad_sequences_args = pad_sequences_args
     #end def
 
-    def fit(self, X, Y=None, **kwargs):
+    def fit(self, X, *args, **kwargs):
         self.count_vectorizer_ = ListCountVectorizer(**self.count_vectorizer_args).fit(X)
         logger.debug('TokensToIndexTransformer vocabulary fitted with size {}.'.format(len(self.vocabulary_)))
 
