@@ -46,7 +46,7 @@ class ListNGramAnalyzer(PureTransformer):
         #end for
     #end def
 
-    def transform_one(self, tokens):
+    def transform_one(self, tokens, **kwargs):
         yield from self.__call__(tokens)
 #end def
 
@@ -119,6 +119,6 @@ class CounterHashingVectorizer(HashingVectorizer):
 
 
 class SpaceTokenizerTransformer(PureTransformer):
-    def transform_one(self, text):
+    def transform_one(self, text, **kwargs):
         return text.split()
 #end class

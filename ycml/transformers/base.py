@@ -22,7 +22,7 @@ class PureTransformer(BaseEstimator, TransformerMixin):
 
     def fit(self, *args, **fit_params): return self
 
-    def transform(self, X, *args, **kwargs):
+    def transform(self, X, y=None, **kwargs):
         timer = Timer()
         transformed = self._transform(X, **kwargs)
         if self.nparray:
@@ -40,11 +40,11 @@ class PureTransformer(BaseEstimator, TransformerMixin):
         return transformed
     #end def
 
-    def _transform(self, X, y=None):
-        return [self.transform_one(row) for row in X]
+    def _transform(self, X, y=None, **kwargs):
+        return [self.transform_one(row, **kwargs) for row in X]
     #end def
 
-    def transform_one(self, x):
+    def transform_one(self, x, **kwargs):
         raise NotImplementedError('transform_one method needs to be implemented.')
 #end class
 

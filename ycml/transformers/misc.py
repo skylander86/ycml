@@ -28,7 +28,7 @@ class DictExtractionTransformer(PureTransformer):
         return self
     #end def
 
-    def transform_one(self, d): return d.get(self.key, self.default)
+    def transform_one(self, d, **kwargs): return d.get(self.key, self.default)
 #end class
 
 
@@ -42,7 +42,7 @@ class DictListExtractionTransformer(PureTransformer):
         self.default = default
     #end def
 
-    def transform_one(self, L): return [d.get(self.key, self.default) for d in L]
+    def transform_one(self, L, **kwargs): return [d.get(self.key, self.default) for d in L]
 #end class
 
 
@@ -52,6 +52,6 @@ class FunctionTransformer(PureTransformer):
         self.func = func
     #end def
 
-    def transform_one(self, x):
+    def transform_one(self, x, **kwargs):
         return self.func(x)
 #end class

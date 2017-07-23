@@ -18,14 +18,14 @@ class TokensToIndexTransformer(PureTransformer):
         self.pad_sequences_args = pad_sequences_args
     #end def
 
-    def fit(self, X, **kwargs):
+    def fit(self, X, Y=None, **kwargs):
         self.count_vectorizer_ = ListCountVectorizer(**self.count_vectorizer_args).fit(X)
         logger.debug('TokensToIndexTransformer vocabulary fitted with size {}.'.format(len(self.vocabulary_)))
 
         return self
     #end def
 
-    def _transform(self, X, y=None):
+    def _transform(self, X, y=None, **kwargs):
         if 'maxlen' in self.pad_sequences_args:
             raise ValueError('The `maxlen` argument should not be set in `pad_sequences_args`. Set it in `pad_sequences` instead.')
 
@@ -38,7 +38,7 @@ class TokensToIndexTransformer(PureTransformer):
             for j, tok in enumerate(analyzer(seq)):
                 index = V.get(tok)
 
-                if not self.skip_unknown: indexes.append(0 if index is None else (index + 1))
+                if not getattr(self, 'skip_unknown', False): indexes.append(0 if index is None else (index + 1))
                 elif index is not None: indexes.append(index)
             #end for
 
