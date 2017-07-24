@@ -33,7 +33,7 @@ class KerasNNClassifierMixin(object):
 
     def __init__(
         self,
-        tf_config=None, set_session=True,
+        tf_config=None, set_session=True,  # set_session should be False when you are initializing a second classifier...
         epochs=10, batch_size=128, passes_per_epoch=1,
         initial_weights=None, initial_epoch=0,
         validation_size=0.2, verbose=0,
