@@ -33,7 +33,7 @@ class KerasNNClassifierMixin(object):
 
     def __init__(
         self,
-        tf_config=None,
+        tf_config=None, set_session=True,
         epochs=10, batch_size=128, passes_per_epoch=1,
         initial_weights=None, initial_epoch=0,
         validation_size=0.2, verbose=0,
@@ -59,7 +59,7 @@ class KerasNNClassifierMixin(object):
 
         self.log_device_placement = log_device_placement
 
-        self.set_session(tf_config)
+        if set_session: self.set_session(tf_config)
     #end def
 
     def fit_binarized(self, X_featurized, Y_binarized, **kwargs):
