@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
-from operator import itemgetter
+import json
 import logging
+from operator import itemgetter
 import os
 from urllib.parse import urlparse
 
@@ -23,6 +24,8 @@ logging.getLogger('botocore').setLevel(logging.WARNING)
 logging.getLogger('boto3').setLevel(logging.WARNING)
 logging.getLogger('requests').setLevel(logging.WARNING)
 
+logger = logging.getLogger('ycml.http_daemon')
+
 
 def create_app(A, file_settings):
     log_level = get_settings(key='log_level', sources=('env', file_settings), default='INFO').upper()
@@ -43,25 +46,13 @@ def create_app(A, file_settings):
     #end if
     config_dict['api_token'] = api_token
 
-    app = Flask(__name__)  # create our flask app!
+    app = Flask('ycml.http_daemon')  # create our flask app!
     app.config.update(config_dict)
 
     with app.app_context():
         current_app.config['featclass'] = load_featclass(settings=file_settings, uri=get_settings(key='featclass_uri', sources=('env', file_settings)))
         if tf: current_app.config['tf_graph'] = tf.get_default_graph()
-
-        current_app.logger.setLevel(logging.getLevelName(log_level))
     #end with
-
-    @app.before_first_request
-    def add_flask_logger_for_production():
-        if not current_app.debug:
-            ch = logging.StreamHandler()
-            formatter = logging.Formatter(log_format)
-            ch.setFormatter(formatter)
-            current_app.logger.addHandler(ch)
-        #end if
-    #end def
 
     @app.route('/', methods=['GET', 'POST'])
     def index():
@@ -82,12 +73,12 @@ def create_app(A, file_settings):
         try: remote_ip = request.headers.getlist('X-Forwarded-For')[0]
         except Exception: remote_ip = None
 
-        instances = o.get('instances', None)
+        instances = o.get('instances')
         if instances is None:
             instances = [o]
 
         if not instances:
-            current_app.logger.debug('Request does not have any instances!')
+            logger.debug('Request does not have any instances!')
             return jsonify(dict(reason='Request does not have any instances!')), 400
         #end if
 
@@ -119,6 +110,9 @@ def create_app(A, file_settings):
 
             if limit: results = [dict(sorted(unbinarized[i].items(), key=itemgetter(1), reverse=True)[:limit]) for i in range(Y_proba.shape[0])]
             else: results = list(unbinarized)
+
+            o['instances'] = '<{} instances>'.format(len(instances))
+            logger.debug('Request={}; Response={}'.format(json.dumps(o), json.dumps(results)))
 
             return jsonify(results)
 
