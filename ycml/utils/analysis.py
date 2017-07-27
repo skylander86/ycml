@@ -260,17 +260,21 @@ def generate_pr_curves(Y_true, Y_proba, output_prefix, *, labels=None, target_na
         ax.legend()
         plt.tight_layout()
 
-        with uri_open(os.path.join(output_prefix, name + '.txt'), 'w') as f:
+        with uri_open(os.path.join(output_prefix, _sanitize_name(name) + '.txt'), 'w') as f:
             for p, r, t in zip(precision, recall, thresholds_):
                 f.write('{} {} {}\n'.format(p, r, t))
         #end with
 
-        with uri_open(os.path.join(output_prefix, name + '.pdf'), 'wb') as f:
+        with uri_open(os.path.join(output_prefix, _sanitize_name(name) + '.pdf'), 'wb') as f:
             fig.savefig(f, format='pdf')
             logger.info('Precision-Recall curve for "{}" saved to <{}>.'.format(name, f.name))
         #end with
     #end for
 #end def
+
+
+def _sanitize_name(name):
+    return ''.join(c for c in name if c.isalnum() or c in '._-()+=&').rstrip()
 
 
 def _make_label_indicator(Y_true, Y_proba):
