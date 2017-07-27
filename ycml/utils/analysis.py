@@ -274,7 +274,7 @@ def generate_pr_curves(Y_true, Y_proba, output_prefix, *, labels=None, target_na
 
 
 def _sanitize_name(name):
-    return ''.join(c for c in name if c.isalnum() or c in '._-()+=&').rstrip()
+    return ''.join(c for c in name if c.isalnum() or c in ' ._-()+=&').rstrip()
 
 
 def _make_label_indicator(Y_true, Y_proba):
