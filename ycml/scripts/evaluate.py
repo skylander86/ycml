@@ -106,7 +106,8 @@ def main():
         assert Y_true_binarized.shape[0] == N
     #end if
 
-    logger.info('Classification report for:\n{}'.format(
+    logger.info('Classification report for <{}>:\n{}'.format(
+        str(classifier),
         classification_report(Y_true_binarized, Y_proba, target_names=labels, thresholds=thresholds, precision_thresholds=A.min_precision, order='support'))
     )
 
