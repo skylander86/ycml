@@ -40,6 +40,9 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
 
     def _fit(self, *args, **kwargs): raise NotImplementedError('_fit is not implemented.')
 
+    def _predict_proba(self, X_featurized, **kwargs):
+        raise NotImplementedError('_predict_proba is not implemented.')
+
     def predict_proba(self, X_featurized, **kwargs):
         timer = Timer()
         Y_proba = self._predict_proba(X_featurized, **kwargs)
@@ -48,16 +51,20 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
         return Y_proba
     #end def
 
-    def _predict_proba(self, X_featurized, **kwargs):
-        raise NotImplementedError('_predict_proba is not implemented.')
-
     def predict(self, X_featurized, **kwargs):
-        return self.predict_and_proba(X_featurized, **kwargs)[1]
+        timer = Timer()
+        Y_proba = self._predict_proba(X_featurized, **kwargs)
+        Y_predict = Y_proba >= 0.5
+        logger.debug('Computed predictions on {} instances {}.'.format(X_featurized.shape[0], timer))
+
+        return Y_predict
     #end def
 
     def predict_and_proba(self, X_featurized, **kwargs):
-        Y_proba = self.predict_proba(X_featurized, **kwargs)
+        timer = Timer()
+        Y_proba = self._predict_proba(X_featurized, **kwargs)
         Y_predict = Y_proba >= 0.5
+        logger.debug('Computed predictions and probabilities on {} instances {}.'.format(X_featurized.shape[0], timer))
 
         return Y_proba, Y_predict
     #end def
