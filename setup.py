@@ -7,7 +7,7 @@ if sys.version_info.major < 3:
 
 setup(
     name='ycml',
-    version='0.1.5',
+    version='0.1.6',
     author='yc sim',
     author_email='hello@yanchuan.sg',
     description='yc\'s collection of convenience code for developing ML applications.',
