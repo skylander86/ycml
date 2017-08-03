@@ -1,6 +1,7 @@
 from collections import Counter, defaultdict
 from datetime import datetime
 import logging
+import os
 import pickle as pickle
 from uuid import uuid4
 
@@ -119,6 +120,10 @@ def load_featurizer(f):
 
 
 def save_featurized(f, X_featurized, *, Y_labels=None, featurized_at=datetime.utcnow(), **kwargs):
+    _, ext = os.path.splitext(f.name)
+    if ext.lower() != '.npz':
+        logger.warning('Featurized files are Numpy compressed files and should have the .npz extension. It will definitely not work with the .gz extension.')
+
     if issparse(X_featurized):
         np.savez_compressed(f, X_featurized_data=X_featurized.data, X_featurized_indices=X_featurized.indices, X_featurized_indptr=X_featurized.indptr, X_featurized_shape=X_featurized.shape, Y_labels=Y_labels, featurized_at=featurized_at, **kwargs)  # Always use compression
     else:
