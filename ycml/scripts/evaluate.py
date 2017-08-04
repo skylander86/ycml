@@ -78,6 +78,7 @@ def main():
         labels = o['labels']
 
         if A.thresholds: thresholds = get_thresholds_from_file(A.thresholds, labels)
+        classifier = 'Classifier({})'.format(o['classifier_uuid'])
 
     else:
         classifier = load_classifier(A.classifier)
