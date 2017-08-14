@@ -22,7 +22,7 @@ class BaseClassifier(BaseEstimator, ClassifierMixin):
         super(BaseClassifier, self).__init__()
 
         self.n_jobs = parse_n_jobs(n_jobs)
-        logger.info('Using n_jobs={} for <{}>.'.format(self.n_jobs, self.name))
+        self.n_jobs_string = n_jobs
     #end def
 
     def fit(self, X, Y, validation_data=None, **kwargs):
