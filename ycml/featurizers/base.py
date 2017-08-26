@@ -82,7 +82,11 @@ class BaseFeaturizer(Pipeline):
         cur = self
         for name in components:
             if hasattr(cur, 'named_steps'):
-                cur = cur.named_steps[name]
+                try:
+                    i = int(name)
+                    cur = cur.steps[i][1]
+                except ValueError:
+                    cur = cur.named_steps[name]
 
             elif hasattr(cur, 'transformer_list'):
                 try:
