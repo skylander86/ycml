@@ -7,7 +7,6 @@ import numpy as np
 from sklearn.preprocessing import MultiLabelBinarizer
 
 from .base import BaseClassifier
-from ..utils import Timer
 
 logger = logging.getLogger(__name__)
 
