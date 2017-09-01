@@ -19,13 +19,13 @@ logger = logging.getLogger(__name__)
 def load_instances(instance_files, labels_field='labels', display_threshold=None, limit=None, progress_interval=None):
     if not isinstance(instance_files, (list, tuple)): instance_files = [instance_files]
 
-    def _filter_display(d):
-        if display_threshold is None:
+    def _filter_display(d, threshold):
+        if threshold is None:
             yield from d
         else:
             ignored_count, ignored_freq = 0, 0
             for label, freq in d:
-                if freq < display_threshold:
+                if freq < threshold:
                     ignored_count += 1
                     ignored_freq += freq
                 else:
@@ -34,7 +34,7 @@ def load_instances(instance_files, labels_field='labels', display_threshold=None
             #end for
 
             if ignored_count > 0:
-                yield 'Ignored labels with freq < {}'.format(display_threshold), '{} ({} labels)'.format(ignored_freq, ignored_count)
+                yield 'Ignored labels with freq < {}'.format(threshold), '{} ({} labels)'.format(ignored_freq, ignored_count)
         #end if
     #end def
 
@@ -73,14 +73,16 @@ def load_instances(instance_files, labels_field='labels', display_threshold=None
 
         if labels_field:
             labels_freq += freq
-            logger.info('Label frequencies for <{}>:\n{}'.format(f.name, tabulate(list(_filter_display(freq.most_common())) + [('Labels total', sum(freq.values())), ('Total', count)], headers=('Label', 'Freq'), tablefmt='psql')))
+            threshold = freq.most_common()[99][1] if len(freq) > 100 and display_threshold is None else display_threshold
+            logger.info('Label frequencies for <{}>:\n{}'.format(f.name, tabulate(list(_filter_display(freq.most_common(), threshold)) + [('Labels total', sum(freq.values())), ('Total', count)], headers=('Label', 'Freq'), tablefmt='psql')))
         #end if
 
         if limit and total_count >= limit: break
     #end for
 
     if labels_field and len(instance_files) > 1:
-        logger.info('Total label frequencies:\n{}'.format(tabulate(list(_filter_display(labels_freq.most_common())) + [('Labels total', sum(labels_freq.values())), ('Total', total_count)], headers=('Label', 'Freq'), tablefmt='psql')))
+        threshold = freq.most_common()[99][1] if len(freq) > 100 and display_threshold is None else display_threshold
+        logger.info('Total label frequencies:\n{}'.format(tabulate(list(_filter_display(labels_freq.most_common(), threshold)) + [('Labels total', sum(labels_freq.values())), ('Total', total_count)], headers=('Label', 'Freq'), tablefmt='psql')))
 #end def
 
 
