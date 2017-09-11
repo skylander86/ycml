@@ -12,7 +12,10 @@ except ImportError: nx = None
 try:
     import spacy
     from spacy import symbols
-except ImportError: spacy = None
+except ImportError:
+    spacy = None
+    symbols = None
+#end try
 
 from .base import PureTransformer
 
@@ -69,33 +72,33 @@ class NamedEntityExtractor(PureTransformer):
 
 
 class NounPhraseExtractor(PureTransformer):
-    POS_TO_CHAR = {
-        symbols.ADJ: 'J',
-        symbols.ADP: 'P',
-        symbols.ADV: 'R',
-        symbols.AUX: 'A',
-        symbols.CONJ: 'C',
-        symbols.CCONJ: 'C',
-        symbols.DET: 'D',
-        symbols.INTJ: 'I',
-        symbols.NOUN: 'N',
-        symbols.NUM: '0',
-        symbols.PART: 'T',
-        symbols.PRON: 'O',
-        symbols.PROPN: 'N',
-        symbols.PUNCT: '.',
-        symbols.SCONJ: 'C',
-        symbols.SYM: '#',
-        symbols.VERB: 'V',
-        symbols.X: 'X',
-        symbols.SPACE: '.',
-        symbols.EOL: '.',
-    }
-
     # def __init__(self, np_rules=[r'(N|J)'], **kwargs):
     def __init__(self, np_rules=[r'((J|X|N|0)(J|C|X|0|N)*(N))'], **kwargs):
         kwargs.setdefault('nparray', False)
         super(NounPhraseExtractor, self).__init__(**kwargs)
+
+        self.POS_TO_CHAR = {
+            symbols.ADJ: 'J',
+            symbols.ADP: 'P',
+            symbols.ADV: 'R',
+            symbols.AUX: 'A',
+            symbols.CONJ: 'C',
+            symbols.CCONJ: 'C',
+            symbols.DET: 'D',
+            symbols.INTJ: 'I',
+            symbols.NOUN: 'N',
+            symbols.NUM: '0',
+            symbols.PART: 'T',
+            symbols.PRON: 'O',
+            symbols.PROPN: 'N',
+            symbols.PUNCT: '.',
+            symbols.SCONJ: 'C',
+            symbols.SYM: '#',
+            symbols.VERB: 'V',
+            symbols.X: 'X',
+            symbols.SPACE: '.',
+            symbols.EOL: '.',
+        }
 
         self.np_rules = []
         for rule in np_rules:
