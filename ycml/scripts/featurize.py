@@ -61,6 +61,7 @@ def main():
         featurizer = model_class(**featurizer_parameters)
         X_featurized = featurizer.fit_transform(X, Y_labels)
         featurizer.save(A.fit)
+        A.fit.close()
 
     elif A.featurize:
         featurizer = load_featurizer(A.featurize)
@@ -132,6 +133,7 @@ def main():
 
             X_meta = np.array([dict(id=X[i][id_key]) for i in shuffled_indexes], dtype=np.object)
             save_featurized(A.output, X_featurized=X_featurized[shuffled_indexes, ...], Y_labels=Y_labels[shuffled_indexes], X_meta=X_meta, featurizer_uuid=featurizer.uuid_)
+            A.output.close()
         #end if
     #end if
 #end def

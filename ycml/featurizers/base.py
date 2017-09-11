@@ -36,7 +36,7 @@ class BaseFeaturizer(Pipeline):
         super(BaseFeaturizer, self).fit(X, Y, **kwargs)
         logger.info('Done fitting {} {}.'.format(type(self).__name__, timer))
 
-        self._post_fit(X=X, **kwargs)
+        self._post_fit(X=X, Y=Y, **kwargs)
 
         return self
     #end def
@@ -49,7 +49,7 @@ class BaseFeaturizer(Pipeline):
         X_featurized = super(BaseFeaturizer, self).fit_transform(X, Y, **kwargs)
         logger.info('Done fitting {} {}.'.format(type(self).__name__, timer))
 
-        self._post_fit(X=X, X_featurized=X_featurized, **kwargs)
+        self._post_fit(X=X, X_featurized=X_featurized, Y=Y, **kwargs)
 
         return X_featurized
     #end def

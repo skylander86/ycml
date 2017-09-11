@@ -1,4 +1,4 @@
-__all__ = ['SpacyNLPProcessor', 'NounPhraseExtractor']
+__all__ = ['SpacyNLPProcessor', 'NounPhraseExtractor', 'NamedEntityExtractor', 'TextRankerKeywordExtractor']
 
 from itertools import combinations, product
 import json
@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 class SpacyNLPProcessor(PureTransformer):
     def __init__(self, model_name='en', spacy_args={}, use_tagger=True, use_parser=True, use_entity=True, batch_size=128, n_jobs=None, generator=False, **kwargs):
-        nparray = kwargs.pop('nparray', False)
-        super(SpacyNLPProcessor, self).__init__(nparray=nparray, **kwargs)
+        kwargs.setdefault('nparray', False)
+        super(SpacyNLPProcessor, self).__init__(**kwargs)
 
         if spacy is None:
             raise ImportError('You need to install the spacy NLP package.')
@@ -52,6 +52,22 @@ class SpacyNLPProcessor(PureTransformer):
 #end def
 
 
+class NamedEntityExtractor(PureTransformer):
+    def __init__(self, entity_labels=None, **kwargs):
+        kwargs.setdefault('nparray', False)
+        super(NamedEntityExtractor, self).__init__(**kwargs)
+
+        self.entity_labels = entity_labels
+    #end def
+
+    def transform_one(self, doc, **kwargs):
+        entities = [ent for ent in doc.ents if self.entity_labels is None or ent.label in self.entity_labels or ent.label_ in self.entity_labels]
+
+        return entities
+    #end def
+#end class
+
+
 class NounPhraseExtractor(PureTransformer):
     POS_TO_CHAR = {
         symbols.ADJ: 'J',
@@ -77,9 +93,9 @@ class NounPhraseExtractor(PureTransformer):
     }
 
     # def __init__(self, np_rules=[r'(N|J)'], **kwargs):
-    def __init__(self, np_rules=[r'((J|X|N|0)(J|C|X|0|N)*(N|0))'], **kwargs):
-        nparray = kwargs.pop('nparray', False)
-        super(NounPhraseExtractor, self).__init__(nparray=nparray, **kwargs)
+    def __init__(self, np_rules=[r'((J|X|N|0)(J|C|X|0|N)*(N))'], **kwargs):
+        kwargs.setdefault('nparray', False)
+        super(NounPhraseExtractor, self).__init__(**kwargs)
 
         self.np_rules = []
         for rule in np_rules:
@@ -109,8 +125,8 @@ class NounPhraseExtractor(PureTransformer):
 
 class TextRankerKeywordExtractor(PureTransformer):
     def __init__(self, use_lemma=True, coocurrence_window_size=8, **kwargs):
-        nparray = kwargs.pop('nparray', False)
-        super(TextRankerKeywordExtractor, self).__init__(nparray=nparray, **kwargs)
+        kwargs.setdefault('nparray', False)
+        super(TextRankerKeywordExtractor, self).__init__(**kwargs)
 
         if nx is None: raise ImportError('You need to install networkx for the TextRankerKeywordExtractor.')
 
@@ -148,10 +164,9 @@ class TextRankerKeywordExtractor(PureTransformer):
         #end for
 
         calculated_page_rank = nx.pagerank(gr)
-        keyphrase_indexes = sorted(calculated_page_rank.keys(), key=calculated_page_rank.get, reverse=True)[:int(N / 3) + 1]
+        keyphrase_indexes = sorted(calculated_page_rank.keys(), key=calculated_page_rank.get, reverse=True)
         keyphrases = []
         for i in keyphrase_indexes:
-            print(vocabulary[i], calculated_page_rank[i])
             keyphrases.append((vocab_map[vocabulary[i]][0], calculated_page_rank[i]))
         #end for
 
