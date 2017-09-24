@@ -25,6 +25,8 @@ class ObjectFeatureUnion(PureTransformer):
     def fit(self, *args, **fit_params):
         for k, step in self.steps.items():
             step.fit(*args, **fit_params)
+
+        return self
     #end def
 
     def _transform(self, X, y=None, **kwargs):
@@ -32,7 +34,7 @@ class ObjectFeatureUnion(PureTransformer):
         if self.as_dict:
             transformed = [dict() for i in range(N)]
             for k, step in self.steps.items():
-                step_transformed = step.transform(X, y=y, **kwargs)
+                step_transformed = step.transform(X, **kwargs)
                 assert len(step_transformed) == N
                 for i in range(N):
                     transformed[i][k] = step_transformed[i]
