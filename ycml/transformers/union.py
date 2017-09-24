@@ -30,22 +30,33 @@ class ObjectFeatureUnion(PureTransformer):
     #end def
 
     def _transform(self, X, y=None, **kwargs):
-        N = len(X)
         if self.as_dict:
-            transformed = [dict() for i in range(N)]
+            transformed = []
+            first = True
+            # zip(*[step.transform(X, **kwargs) for k, step in self.steps.items()])
             for k, step in self.steps.items():
                 step_transformed = step.transform(X, **kwargs)
-                assert len(step_transformed) == N
-                for i in range(N):
-                    transformed[i][k] = step_transformed[i]
+                for i, t in enumerate(step_transformed):
+                    if first:
+                        transformed.append({k: t})
+                    else:
+                        transformed[i][k] = t
+                #end for
+
+                first = False
             #end for
+
         else:
-            transformed = [list() for i in range(N)]
+            transformed = []
+            first = True
             for k, step in self.steps.items():
                 step_transformed = step.transform(X, y=y, **kwargs)
-                assert len(step_transformed) == N
-                for i in range(N):
-                    transformed[i].append(step_transformed[i])
+                for i, t in enumerate(step_transformed):
+                    if first:
+                        transformed.append([t])
+                    else:
+                        transformed[i].append(t)
+                #end for
             #end for
         #end if
 
