@@ -19,8 +19,8 @@ def _list_analyzer(L):
 
 class ListNGramAnalyzer(PureTransformer):
     def __init__(self, ngram_range=(1, 1), ngram_delimiter=' ', **kwargs):
-        nparray = kwargs.pop('nparray', False)
-        super(ListNGramAnalyzer, self).__init__(nparray=nparray, **kwargs)
+        kwargs.setdefault('nparray', False)
+        super(ListNGramAnalyzer, self).__init__(**kwargs)
 
         if isinstance(ngram_range, tuple) and len(ngram_range) == 2: ngrams = list(range(ngram_range[0], ngram_range[1] + 1))
         elif isinstance(ngram_range, str): ngrams = [int(ngram_range)]
