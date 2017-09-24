@@ -30,7 +30,7 @@ class SpacyNLPProcessor(PureTransformer):
         if spacy is None:
             raise ImportError('You need to install the spacy NLP package.')
 
-        if n_jobs is None: self.n_jobs = os.environ.get('N_JOBS', 1)
+        if n_jobs is None: self.n_jobs = int(os.environ.get('N_JOBS', 1))
         else: self.n_jobs = n_jobs
 
         self.batch_size = batch_size
