@@ -1,4 +1,4 @@
-__all__ = ['DictExtractionTransformer', 'DictListExtractionTransformer', 'FunctionTransformer', 'ListConcatTransformer']
+__all__ = ['DictExtractionTransformer', 'DictListExtractionTransformer', 'FunctionTransformer']
 
 from . import PureTransformer
 
@@ -54,36 +54,4 @@ class FunctionTransformer(PureTransformer):
 
     def transform_one(self, x, **kwargs):
         return self.func(x)
-#end class
-
-
-class ListConcatTransformer(PureTransformer):
-    """Concatenate two lists for each instance."""
-
-    def __init__(self, steps=[], **kwargs):
-        kwargs.setdefault('nparray', False)
-        super(ListConcatTransformer, self).__init__(**kwargs)
-
-        self.steps = steps
-    #end def
-
-    def fit(self, *args, **kwargs):
-        for step in self.steps:
-            step.fit(*args, **kwargs)
-
-        return self
-    #end def
-
-    def _transform(self, X, *args, **kwargs):
-        N = len(X)
-        transformed = [[] for i in range(N)]
-        for step in self.steps:
-            transformed_step = step.transform(X, *args, **kwargs)
-            assert len(transformed_step) == N
-            for j in range(N):
-                transformed[j] += transformed_step[j]
-        #end for
-
-        return transformed
-    #end def
 #end class
