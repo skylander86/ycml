@@ -177,7 +177,8 @@ def load_featurized(f, keys=[], raise_on_missing=True):
     #end if
 
     if Y_labels is not None:
-        freq = Counter(label for labels in Y_labels for label in labels)
+        try: freq = Counter(label for labels in Y_labels for label in labels)
+        except TypeError: freq = Counter()
         freq['<none>'] = sum(1 for labels in Y_labels if not labels)
         if freq['<none>'] == 0: del freq['<none>']
 
