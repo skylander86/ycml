@@ -54,8 +54,10 @@ def load_instances(instance_files, labels_field='labels', display_threshold=None
                 else:
                     labels = o.get(labels_field)
                     if labels is not None:
-                        if labels: freq.update(labels)
-                        else: freq['<none>'] += 1
+                        try:
+                            if labels: freq.update(labels)
+                            else: freq['<none>'] += 1
+                        except TypeError: pass  # unhashable type
                     #end if
 
                     yield (o, labels)
