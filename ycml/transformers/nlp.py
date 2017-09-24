@@ -1,4 +1,4 @@
-__all__ = ['SpacyNLPProcessor', 'NounPhraseExtractor', 'NamedEntityExtractor', 'TextRankerKeywordExtractor']
+__all__ = ['SpacyNLPProcessor', 'SpacyDocSerializer', 'NounPhraseExtractor', 'NamedEntityExtractor', 'TextRankerKeywordExtractor']
 
 from itertools import combinations, product
 import json
@@ -32,27 +32,76 @@ class SpacyNLPProcessor(PureTransformer):
 
         if n_jobs is None: self.n_jobs = os.environ.get('N_JOBS', 1)
         else: self.n_jobs = n_jobs
+
         self.batch_size = batch_size
         self.generator = generator
 
-        self.nlp = spacy.load(model_name, **spacy_args)
+        self.spacy_args = spacy_args
+        self.model_name = model_name
+        self.use_tagger = use_tagger
+        self.use_parser = use_parser
+        self.use_entity = use_entity
+
+        self.nlp = self._setup_nlp(model_name, spacy_args, use_tagger, use_parser, use_entity)
+    #end def
+
+    def _setup_nlp(self, model_name='en', spacy_args={}, use_tagger=True, use_parser=True, use_entity=True):
+        nlp = spacy.load(model_name, **spacy_args)
         if 'pipeline' not in spacy_args and 'create_pipeline' not in spacy_args:
             pipeline = []
-            if use_tagger: pipeline.append(self.nlp.tagger)
-            if use_parser: pipeline.append(self.nlp.parser)
-            if use_entity: pipeline.append(self.nlp.entity)
+            if use_tagger: pipeline.append(nlp.tagger)
+            if use_parser: pipeline.append(nlp.parser)
+            if use_entity: pipeline.append(nlp.entity)
 
-            self.nlp.pipeline = pipeline
+            nlp.pipeline = pipeline
         #end if
 
-        logger.debug('Loaded spacy model {}'.format(json.dumps(self.nlp.meta)))
+        logger.debug('Loaded spacy model {}'.format(json.dumps(nlp.meta)))
+
+        return nlp
     #end def
 
     def _transform(self, X_texts, **kwargs):
         if self.generator: return (doc for doc in self.nlp.pipe(X_texts, batch_size=self.batch_size, n_threads=self.n_jobs))
         return [doc for doc in self.nlp.pipe(X_texts, batch_size=self.batch_size, n_threads=self.n_jobs)]
     #end def
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop('nlp', None)
+
+        return state
+    #end def
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+        self.nlp = self._setup_nlp(self.model_name, self.spacy_args, self.use_tagger, self.use_parser, self.use_entity)
+    #end def
 #end def
+
+
+class SpacyDocSerializer(PureTransformer):
+    def __init__(self, **kwargs):
+        kwargs.setdefault('nparray', False)
+        super(SpacyDocSerializer, self).__init__(**kwargs)
+    #end def
+
+    def transform_one(self, doc, **kwargs):
+        tokens = {}
+        for tok in doc:
+            tokens[tok.i] = dict(idx=tok.idx, ent_type=tok.ent_type_, ent_iob=tok.ent_iob_, lemma=tok.lemma_, text=tok.text, pos=tok.pos_, tag=tok.tag_, head=tok.head.i, dep=tok.dep_)
+        #end for
+
+        sentences = [dict(tokens=[tok.i for tok in sent]) for sent in doc.sents]
+        entities = [dict(tokens=[tok.i for tok in ent], label=ent.label_) for ent in doc.ents]
+        noun_chunks = [dict(tokens=[tok.i for tok in chunk]) for chunk in doc.noun_chunks]
+
+        d = dict(length=len(doc), text=doc.text, tokens=tokens, sentences=sentences, entities=entities, noun_chunks=noun_chunks)
+
+        return d
+    #end def
+#end class
 
 
 class NamedEntityExtractor(PureTransformer):
