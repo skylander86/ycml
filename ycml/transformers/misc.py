@@ -1,4 +1,4 @@
-__all__ = ['DictExtractionTransformer', 'DictListExtractionTransformer', 'FunctionTransformer']
+__all__ = ['DictExtractionTransformer', 'DictListExtractionTransformer', 'FunctionTransformer', 'IdentityTransformer']
 
 from . import PureTransformer
 
@@ -40,4 +40,10 @@ class FunctionTransformer(PureTransformer):
 
     def transform_one(self, x, **kwargs):
         return self.func(x)
+#end class
+
+
+class IdentityTransformer(PureTransformer):
+    def transform_one(self, x, **kwargs):
+        return x
 #end class

@@ -4,6 +4,8 @@ import re
 
 import numpy as np
 
+from sklearn.metrics import classification_report as sklearn_classification_report
+
 from tabulate import tabulate
 
 from uriutils import URIFileType, URIType
@@ -111,6 +113,11 @@ def main():
         str(classifier),
         classification_report(Y_true_binarized, Y_proba, target_names=labels, thresholds=thresholds, precision_thresholds=A.min_precision, order='support'))
     )
+
+    # logger.info('sklearn Classification report for <{}>:\n{}'.format(
+    #     str(classifier),
+    #     sklearn_classification_report(Y_true_binarized, Y_proba, target_names=labels, digits=3))
+    # )
 
     if A.save_probabilities:
         np.savez_compressed(A.save_probabilities, featurizer_uuid=featurizer_uuid, classifier_uuid=classifier.uuid_, Y_proba=Y_proba, Y_true_binarized=Y_true_binarized, thresholds=thresholds, labels=labels)
