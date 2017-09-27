@@ -18,7 +18,6 @@ from uriutils import URIFileType
 from ycsettings import Settings
 
 # We use ycml full paths here so it is easy to copy and paste this code.
-from ycml.utils import load_dictionary_from_file
 from ycml.featclass import load_featclass
 from ycml.http_daemon.decorators import check_api_token
 

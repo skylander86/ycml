@@ -14,7 +14,7 @@ from ..featurizers import load_featurizer
 
 from uriutils import uri_open
 
-from ..utils import load_dictionary_from_file, get_class_from_module_path, chunked_iterator
+from ..utils import get_class_from_module_path, chunked_iterator
 
 logger = logging.getLogger(__name__)
 
@@ -112,15 +112,14 @@ class BaseFeatClass(BaseEstimator, ClassifierMixin):
 #end class
 
 
-def load_featclass(*, settings={}, uri=None, check_environment=True):
+def load_featclass(*, settings=None, uri=None, check_environment=True):
     settings_from_uri = {}
 
-    if uri is not None:
-        settings_from_uri = load_dictionary_from_file(uri)
+    if settings is None:
+        settings = Settings(uri)
 
-    settings = Settings(settings_from_uri, settings, search_first=['env', 'env_settings_uri'] if check_environment else [])
-    featclass_type = settings.get('featclass_type', raise_exception=True)
-    featclass_parameters = settings.getdict('featclass_parameters', default={})
+    featclass_type = settings.get('featclass_type', raise_exception=True, additional_sources=[settings_from_uri])
+    featclass_parameters = settings.getdict('featclass_parameters', default={}, additional_sources=[settings_from_uri])
 
     featclass_class = get_class_from_module_path(featclass_type)
     featclass = featclass_class(**featclass_parameters)
