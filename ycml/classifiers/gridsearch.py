@@ -45,6 +45,7 @@ class HyperparameterGridsearchMixin(object):
         param_scores = Parallel(n_jobs=self.n_jobs)(delayed(_fit_classifier)(klass, self.classifier_args, param, self.metric, X_train, Y_train, X_validation, Y_validation) for param in ParameterGrid(self.param_grid))
 
         best_param, best_score = max(param_scores, key=lambda x: x[1])
+        logger.info('Best scoring param is {} with score {}.'.format(best_param, best_score))
 
         classifier_args = {}
         classifier_args.update(self.classifier_args)
