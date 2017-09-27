@@ -1,7 +1,8 @@
 YCML
 ====
 
-[![PyPI](https://img.shields.io/pypi/v/ycml.svg)](https://pypi.python.org/pypi/ycml)
+.. image:: https://img.shields.io/pypi/v/ycml.svg
+        :target: https://pypi.python.org/pypi/ycml
 
 This package contains a collection of code that I've written over the past years for pretty run-of-the-mill deployments of machine learning projects.
 
