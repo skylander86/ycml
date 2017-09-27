@@ -113,13 +113,14 @@ class BaseFeatClass(BaseEstimator, ClassifierMixin):
 
 
 def load_featclass(*, settings=None, uri=None, check_environment=True):
-    settings_from_uri = {}
-
     if settings is None:
         settings = Settings(uri)
 
-    featclass_type = settings.get('featclass_type', raise_exception=True, additional_sources=[settings_from_uri])
-    featclass_parameters = settings.getdict('featclass_parameters', default={}, additional_sources=[settings_from_uri])
+    if not isinstance(settings, Settings):
+        settings = Settings(settings, uri)
+
+    featclass_type = settings.get('featclass_type', raise_exception=True)
+    featclass_parameters = settings.getdict('featclass_parameters', default={})
 
     featclass_class = get_class_from_module_path(featclass_type)
     featclass = featclass_class(**featclass_parameters)
