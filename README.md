@@ -1,5 +1,8 @@
 # YCML
 
+[![PyPI](https://img.shields.io/pypi/v/ycml.svg)](https://pypi.python.org/pypi/ycml)
+
+
 This package contains a collection of code that I've written over the past years for pretty run-of-the-mill deployments of machine learning projects.
 
 Documentation is sparse because this is mostly for my own personal use. Sorry!
