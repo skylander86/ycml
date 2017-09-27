@@ -15,8 +15,10 @@ except ImportError: tf = None
 
 from uriutils import URIFileType
 
+from ycsettings import Settings
+
 # We use ycml full paths here so it is easy to copy and paste this code.
-from ycml.utils import get_settings, load_dictionary_from_file
+from ycml.utils import load_dictionary_from_file
 from ycml.featclass import load_featclass
 from ycml.http_daemon.decorators import check_api_token
 
@@ -27,9 +29,9 @@ logging.getLogger('requests').setLevel(logging.WARNING)
 logger = logging.getLogger('ycml.http_daemon')
 
 
-def create_app(A, file_settings):
-    log_level = get_settings(key='log_level', sources=('env', file_settings), default='INFO').upper()
-    log_format = get_settings(key='log_format', sources=(A, 'env', file_settings), default='%(asctime)-15s [%(name)s-%(process)d] %(levelname)s: %(message)s')
+def create_app(A, settings):
+    log_level = settings.get('log_level', default='INFO').upper()
+    log_format = settings.get('log_format', default='%(asctime)-15s [%(name)s-%(process)d] %(levelname)s: %(message)s')
     logging.basicConfig(format=log_format, level=logging.getLevelName(log_level))
 
     config_dict = dict(
@@ -39,9 +41,9 @@ def create_app(A, file_settings):
     )
     config_dict['JSONIFY_PRETTYPRINT_REGULAR'] = config_dict['DEBUG']
 
-    api_token = get_settings(key='http_daemon_api_token', sources=('env', file_settings))
+    api_token = settings.get('http_daemon_api_token')
     if api_token is None:
-        http_daemon_uri = get_settings(key='http_daemon_uri', sources=('env', file_settings), raise_on_missing=True)
+        http_daemon_uri = settings.get('http_daemon_uri', raise_exception=True)
         api_token = os.path.basename(urlparse(http_daemon_uri).path)
     #end if
     config_dict['api_token'] = api_token
@@ -50,7 +52,7 @@ def create_app(A, file_settings):
     app.config.update(config_dict)
 
     with app.app_context():
-        current_app.config['featclass'] = load_featclass(settings=file_settings, uri=get_settings(key='featclass_uri', sources=('env', file_settings)))
+        current_app.config['featclass'] = load_featclass(settings=settings, uri=settings.get('featclass_uri'))
         if tf: current_app.config['tf_graph'] = tf.get_default_graph()
     #end with
 
@@ -126,10 +128,7 @@ def create_app(A, file_settings):
 
 
 def gunicorn_app(environ, start_response):
-    settings_uri = get_settings(key='settings_uri', sources=('env',), raise_on_missing=True)
-    file_settings = load_dictionary_from_file(settings_uri)
-
-    app = create_app({}, file_settings)
+    app = create_app({}, Settings())
 
     return app(environ, start_response)
 #end def
@@ -143,14 +142,11 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--port', type=int, default=None, metavar='p', help='Port to listen on.', dest='http_daemon_port')
     A = parser.parse_args()
 
-    if A.settings: settings_uri = A.settings
-    else: settings_uri = get_settings(key='settings_uri', sources=('env', A), raise_on_missing=True)
+    settings = Settings(A)
 
-    file_settings = load_dictionary_from_file(settings_uri)
-
-    http_daemon_port = get_settings(key='http_daemon_port', sources=('env', A, file_settings))
+    http_daemon_port = settings.get('http_daemon_port')
     if http_daemon_port is None:
-        http_daemon_uri = get_settings(key='http_daemon_uri', sources=('env', file_settings), raise_on_missing=True)
+        http_daemon_uri = settings.get('http_daemon_uri', raise_exception=True)
         http_daemon_port = urlparse(http_daemon_uri).port
     #end if
 
@@ -159,6 +155,6 @@ if __name__ == '__main__':
 
     http_daemon_port = int(http_daemon_port)
 
-    app = create_app(A, file_settings)
+    app = create_app(A, settings)
     app.run(debug=A.debug, host='0.0.0.0', use_reloader=False, port=http_daemon_port)
 #end if

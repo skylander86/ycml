@@ -3,8 +3,10 @@ import logging
 
 from uriutils import URIFileType
 
+from ycsettings import Settings
+
 from ..featurizers import load_featurized
-from ..utils import load_dictionary_from_file, get_settings, get_class_from_module_path
+from ..utils import get_class_from_module_path
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +14,7 @@ logger = logging.getLogger(__name__)
 def main():
     parser = ArgumentParser(description='Classify instances using ML classifier.')
     parser.add_argument('--log-level', type=str, metavar='<log_level>', help='Set log level of logger.')
-    parser.add_argument('-s', '--settings', type=URIFileType(), metavar='<settings_file>', help='Settings file to configure models.')
+    parser.add_argument('-s', '--settings', dest='settings_uri', type=URIFileType(), metavar='<settings_file>', help='Settings file to configure models.')
     parser.add_argument('--n-jobs', type=int, metavar='<N>', help='No. of processor cores to use.')
 
     parser.add_argument('classifier_type', type=str, metavar='<classifier_type>', nargs='?', help='Type of classifier model to fit.')
@@ -24,15 +26,14 @@ def main():
 
     A = parser.parse_args()
 
-    file_settings = load_dictionary_from_file(A.settings) if A.settings else {}
-
-    log_level = get_settings(key='log_level', sources=(A, 'env', file_settings), default='DEBUG').upper()
-    log_format = get_settings(key='log_format', sources=(A, 'env', file_settings), default='%(asctime)-15s [%(name)s-%(process)d] %(levelname)s: %(message)s')
+    settings = Settings(A)
+    log_level = settings.get('log_level', default='DEBUG').upper()
+    log_format = settings.get('log_format', default='%(asctime)-15s [%(name)s-%(process)d] %(levelname)s: %(message)s')
     logging.basicConfig(format=log_format, level=logging.getLevelName(log_level))
 
-    classifier_type = get_settings(key='classifier_type', sources=(A, 'env', file_settings))
-    classifier_parameters = get_settings((file_settings, 'classifier_parameters'), default={})
-    classifier_parameters['n_jobs'] = get_settings(key='n_jobs', sources=(A, 'env', classifier_parameters, file_settings), default=1)
+    classifier_type = settings.get('classifier_type')
+    classifier_parameters = settings.get('classifier_parameters', default={})
+    classifier_parameters['n_jobs'] = settings.getnjobs('n_jobs', default=1)
 
     classifier_class = get_class_from_module_path(classifier_type)
     if not classifier_class: parser.error('Unknown classifier name "{}".'.format(classifier_type))

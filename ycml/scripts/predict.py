@@ -5,7 +5,9 @@ import sys
 
 from uriutils import URIFileType
 
-from ..utils import load_dictionary_from_file, load_instances, get_settings
+from ycsettings import Settings
+
+from ..utils import load_dictionary_from_file, load_instances
 from ..featclass import load_featclass
 
 logger = logging.getLogger(__name__)
@@ -15,20 +17,20 @@ def main():
     parser = ArgumentParser(description='Predict instances using ML classifier.')
     parser.add_argument('-s', '--settings', type=URIFileType(), metavar='<settings_file>', help='Settings file to configure models.')
     parser.add_argument('instances', type=URIFileType('r'), metavar='<instances>', help='Instances to use for prediction.')
-    parser.add_argument('--featclass', type=URIFileType(), metavar='<featclass_uri>', help='Featclass configuration file to use for prediction.')
+    parser.add_argument('--featclass', type=URIFileType('r'), metavar='<featclass_uri>', help='Featclass configuration file to use for prediction.')
     parser.add_argument('-p', '--probabilities', action='store_true', help='Also save prediction probabilities.')
     parser.add_argument('-o', '--output', type=URIFileType('w'), default=sys.stdout.buffer, help='Save predictions to this file.')
 
     A = parser.parse_args()
 
-    file_settings = load_dictionary_from_file(A.settings) if A.settings else {}
+    settings = Settings(A)
 
-    log_level = get_settings(key='log_level', sources=(A, 'env', file_settings), default='DEBUG').upper()
-    log_format = get_settings(key='log_format', sources=(A, 'env', file_settings), default='%(asctime)-15s [%(name)s-%(process)d] %(levelname)s: %(message)s')
+    log_level = settings.get('log_level', default='DEBUG').upper()
+    log_format = settings.get('log_format', default='%(asctime)-15s [%(name)s-%(process)d] %(levelname)s: %(message)s')
     logging.basicConfig(format=log_format, level=logging.getLevelName(log_level))
 
     if A.featclass: featclass = load_featclass(settings=load_dictionary_from_file(A.featclass))
-    else: featclass = load_featclass(settings=file_settings, uri=get_settings(key='featclass_uri', sources=('env', file_settings)))
+    else: featclass = load_featclass(uri=settings.get('featclass_uri'))
 
     for count, args in enumerate(featclass.predictions_generator(load_instances(A.instances, labels_field=None), include_proba=A.probabilities, unbinarized=True), start=1):
         if A.probabilities:
