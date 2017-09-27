@@ -50,4 +50,4 @@ There are various options to save threshold values to file, save and load probab
 
 Making predictions:
 
-    python -m ycml.scripts.predict --settings settings/development.settings.yaml models/development.classifier.gz data/evaluate.features.npz --format yaml
+    python -m ycml.scripts.predict --settings settings/development.settings.yaml data/evaluate.json.gz

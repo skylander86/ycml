@@ -10,8 +10,10 @@ from tabulate import tabulate
 
 from uriutils import URIFileType
 
+from ycsettings import Settings
+
 from ..featurizers import load_featurizer, load_featurized, save_featurized
-from ..utils import load_instances, load_dictionary_from_file, get_settings, parse_n_jobs, get_class_from_module_path
+from ..utils import load_instances, get_class_from_module_path
 
 __all__ = []
 
@@ -23,7 +25,7 @@ def main():
     parser.add_argument('featurizer_type', type=str, metavar='<featurizer_type>', nargs='?', default=None, help='Name of featurizer model to use.')
     parser.add_argument('-i', '--instances', type=URIFileType('r'), nargs='*', default=[], metavar='<instances>', help='List of instance files to featurize.')
     parser.add_argument('-o', '--output', type=URIFileType('wb'), metavar='<features_uri>', help='Save featurized instances here.')
-    parser.add_argument('-s', '--settings', type=URIFileType(), metavar='<settings_uri>', help='Settings file to configure models.')
+    parser.add_argument('-s', '--settings', dest='settings_uri', type=URIFileType(), metavar='<settings_uri>', help='Settings file to configure models.')
     parser.add_argument('--n-jobs', type=int, metavar='<N>', help='No. of processes to use during featurization.')
     parser.add_argument('--log-level', type=str, metavar='<log_level>', help='Set log level of logger.')
     parser.add_argument('--shuffle', action='store_true', help='Shuffle ordering of instances before writing them to file.')
@@ -36,17 +38,17 @@ def main():
     group.add_argument('-v', '--verify', type=URIFileType(), metavar=('<featurizer_uri>', '<featurized_uri>'), nargs=2, help='Verify that the featurized instance file came from the same featurizer model.')
     A = parser.parse_args()
 
-    file_settings = load_dictionary_from_file(A.settings) if A.settings else {}
+    settings = Settings(A, search_first=['env', 'env_settings_uri'])
 
-    log_level = get_settings(key='log_level', sources=(A, 'env', file_settings), default='DEBUG').upper()
-    log_format = get_settings(key='log_format', sources=(A, 'env', file_settings), default='%(asctime)-15s [%(name)s-%(process)d] %(levelname)s: %(message)s')
+    log_level = settings.get('log_level', default='DEBUG').upper()
+    log_format = settings.get('log_format', default='%(asctime)-15s [%(name)s-%(process)d] %(levelname)s: %(message)s')
     logging.basicConfig(format=log_format, level=logging.getLevelName(log_level))
 
-    featurizer_type = get_settings(key='featurizer_type', sources=(A, 'env', file_settings))
-    featurizer_parameters = get_settings(key='featurizer_parameters', sources=(file_settings, ), default={})
-    featurizer_parameters['n_jobs'] = parse_n_jobs(get_settings(key='n_jobs', sources=(A, 'env', featurizer_parameters, file_settings), default=1))
+    featurizer_type = settings.get('featurizer_type')
+    featurizer_parameters = settings.get('featurizer_parameters', default={})
+    featurizer_parameters['n_jobs'] = settings.getnjobs('n_jobs', default=1)
 
-    labels_field = get_settings(key='labels_field', sources=('env', file_settings), default='labels')
+    labels_field = settings.get('labels_field', default='labels')
     logger.debug('Using "{}" for labels field.'.format(labels_field))
 
     if A.instances:

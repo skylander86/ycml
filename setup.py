@@ -12,7 +12,7 @@ with open(os.path.join(SCRIPT_DIR, 'README.md'), 'r') as readme_file:
     readme = readme_file.read()
 
 with open(os.path.join(SCRIPT_DIR, 'requirements.txt'), 'r') as f:
-    requirements = list(filter(None, (line.strip() for line in f)))
+    requirements = list(filter(None, (line.strip() for line in f if not line.startswith('#'))))
 
 with open(os.path.join(SCRIPT_DIR, 'VERSION'), 'r') as f:
     version = f.read().strip()

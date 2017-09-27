@@ -47,7 +47,7 @@ class PureTransformer(BaseEstimator, TransformerMixin):
     #end def
 
     def _transform(self, X, y=None, **kwargs):
-        if self.generator:
+        if getattr(self, 'generator', False):
             return (self.transform_one(row, **kwargs) for row in X)
 
         return [self.transform_one(row, **kwargs) for row in X]

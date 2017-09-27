@@ -10,11 +10,12 @@ from tabulate import tabulate
 
 from uriutils import URIFileType, URIType
 
+from ycsettings import Settings
+
 from ..classifiers import load_classifier, get_thresholds_from_file
 from ..featurizers import load_featurized
 from ..utils import classification_report, find_best_thresholds, generate_pr_curves
-from ..utils import get_settings
-from ..utils import load_dictionary_from_file, save_dictionary_to_file
+from ..utils import save_dictionary_to_file
 
 __all__ = []
 
@@ -44,10 +45,10 @@ def main():
 
     A = parser.parse_args()
 
-    file_settings = load_dictionary_from_file(A.settings) if A.settings else {}
+    settings = Settings(A)
 
-    log_level = get_settings(key='log_level', sources=(A, 'env', file_settings), default='DEBUG').upper()
-    log_format = get_settings(key='log_format', sources=(A, 'env', file_settings), default='%(asctime)-15s [%(name)s-%(process)d] %(levelname)s: %(message)s')
+    log_level = settings.get('log_level', default='DEBUG').upper()
+    log_format = settings.get('log_format', default='%(asctime)-15s [%(name)s-%(process)d] %(levelname)s: %(message)s')
     logging.basicConfig(format=log_format, level=logging.getLevelName(log_level))
 
     if A.classifier_info:

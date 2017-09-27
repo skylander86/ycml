@@ -7,12 +7,14 @@ import numpy as np
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 
+from ycsettings import Settings
+
 from ..classifiers import load_classifier
 from ..featurizers import load_featurizer
 
 from uriutils import uri_open
 
-from ..utils import get_settings, load_dictionary_from_file, get_class_from_module_path, chunked_iterator
+from ..utils import get_class_from_module_path, chunked_iterator
 
 logger = logging.getLogger(__name__)
 
@@ -110,15 +112,15 @@ class BaseFeatClass(BaseEstimator, ClassifierMixin):
 #end class
 
 
-def load_featclass(*, settings={}, uri=None, check_environment=True):
-    settings_from_uri = {}
+def load_featclass(*, settings=None, uri=None, check_environment=True):
+    if settings is None:
+        settings = Settings(uri)
 
-    if uri is not None:
-        settings_from_uri = load_dictionary_from_file(uri)
+    if not isinstance(settings, Settings):
+        settings = Settings(settings, uri)
 
-    sources = ('env', settings_from_uri, settings) if check_environment else (settings_from_uri, settings)
-    featclass_type = get_settings(key='featclass_type', sources=sources, raise_on_missing=True)
-    featclass_parameters = get_settings(key='featclass_parameters', sources=sources, default={})
+    featclass_type = settings.get('featclass_type', raise_exception=True)
+    featclass_parameters = settings.getdict('featclass_parameters', default={})
 
     featclass_class = get_class_from_module_path(featclass_type)
     featclass = featclass_class(**featclass_parameters)
