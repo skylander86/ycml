@@ -8,7 +8,7 @@ if sys.version_info.major < 3:
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
-with open(os.path.join(SCRIPT_DIR, 'README.md'), 'r') as readme_file:
+with open(os.path.join(SCRIPT_DIR, 'README.rst'), 'r') as readme_file:
     readme = readme_file.read()
 
 with open(os.path.join(SCRIPT_DIR, 'requirements.txt'), 'r') as f:
