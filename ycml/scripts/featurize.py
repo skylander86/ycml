@@ -26,8 +26,6 @@ def main():
     parser.add_argument('-i', '--instances', type=URIFileType('r'), nargs='*', default=[], metavar='<instances>', help='List of instance files to featurize.')
     parser.add_argument('-o', '--output', type=URIFileType('wb'), metavar='<features_uri>', help='Save featurized instances here.')
     parser.add_argument('-s', '--settings', dest='settings_uri', type=URIFileType(), metavar='<settings_uri>', help='Settings file to configure models.')
-    parser.add_argument('--n-jobs', type=int, metavar='<N>', help='No. of processes to use during featurization.')
-    parser.add_argument('--log-level', type=str, metavar='<log_level>', help='Set log level of logger.')
     parser.add_argument('--shuffle', action='store_true', help='Shuffle ordering of instances before writing them to file.')
 
     group = parser.add_mutually_exclusive_group(required=True)
@@ -45,7 +43,7 @@ def main():
     logging.basicConfig(format=log_format, level=logging.getLevelName(log_level))
 
     featurizer_type = settings.get('featurizer_type')
-    featurizer_parameters = settings.get('featurizer_parameters', default={})
+    featurizer_parameters = settings.getdict('featurizer_parameters', default={})
     featurizer_parameters['n_jobs'] = settings.getnjobs('n_jobs', default=1)
 
     labels_field = settings.get('labels_field', default='labels')
@@ -124,7 +122,7 @@ def main():
             #end if
 
             id_key = None
-            for key in ['_id', 'id', 'id_', 'uuid']:
+            for key in ['_id', 'id', 'id_', 'uuid', 'docid']:
                 if key in X[0]:
                     id_key = key
                     break
