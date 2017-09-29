@@ -30,6 +30,7 @@ class PureTransformer(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None, **kwargs):
         timer = Timer()
         transformed = self._transform(X, y=y, **kwargs)
+
         if self.nparray:
             nparray_dtype = getattr(self, 'nparray_dtype', None)
             if nparray_dtype:
