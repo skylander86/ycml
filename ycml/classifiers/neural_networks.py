@@ -212,7 +212,7 @@ class KerasNNClassifierMixin(object):
         batch_size = kwargs.pop('batch_size', self.batch_size)
         verbose = kwargs.pop('verbose', self.verbose)
 
-        return nn_model.predict_proba(X.toarray() if sps.issparse(X) else X, batch_size=batch_size, verbose=verbose)
+        return nn_model.predict(X.toarray() if sps.issparse(X) else X, batch_size=batch_size, verbose=verbose)
     #end def
 
     def keras_predict_generator(self, X, *, nn_model=None, **kwargs):
