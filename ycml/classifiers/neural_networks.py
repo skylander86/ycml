@@ -215,7 +215,7 @@ class KerasNNClassifierMixin(object):
         return nn_model.predict(X.toarray() if sps.issparse(X) else X, batch_size=batch_size, verbose=verbose)
     #end def
 
-    def keras_predict_generator(self, X, *, nn_model=None, **kwargs):
+    def keras_predict_generator(self, X, *, nn_model=None, generator_func=None, **kwargs):
         if nn_model is None: nn_model = getattr(self, self.NN_MODEL_ATTRIBUTE)
 
         N = X.shape[0]
@@ -224,7 +224,9 @@ class KerasNNClassifierMixin(object):
         verbose = kwargs.pop('verbose', self.verbose)
         steps = int(math.ceil(N / batch_size))
 
-        return nn_model.predict_generator(self._generator(X, None, batch_size=batch_size, shuffle=False), steps=steps, verbose=verbose)[:N, ...]
+        if generator_func is None: generator_func = self._generator
+
+        return nn_model.predict_generator(generator_func(X, None, batch_size=batch_size, shuffle=False), steps=steps, verbose=verbose)[:N, ...]
     #end def
 
     def build_callbacks(self):
