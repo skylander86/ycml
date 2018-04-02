@@ -166,6 +166,7 @@ class MulticlassLabelsClassifier(MultiLabelsClassifier):
 
     def multiclassify_labels(self, Y_labels, **kwargs):
         Y_binarized = self.binarize_labels(Y_labels, **kwargs)
+
         return MulticlassLabelsClassifier.multilabel_to_multiclass(Y_binarized)
     #end def
 
