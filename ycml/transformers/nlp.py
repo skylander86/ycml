@@ -64,7 +64,8 @@ class SpacyNLPProcessor(PureTransformer):
     def _transform(self, X_texts, **kwargs):
         if self.generator:
             return (doc for doc in self.nlp.pipe(X_texts, batch_size=self.batch_size, n_threads=self.n_jobs))
-        return [doc for doc in self.nlp.pipe(X_texts, batch_size=self.batch_size, n_threads=self.n_jobs)]
+
+        return [self.nlp(text) for text in X_texts]
     #end def
 
     def __getstate__(self):
