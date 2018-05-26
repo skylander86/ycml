@@ -80,7 +80,7 @@ class KerasNNClassifierMixin(object):
         return Y_proba
     #end def
 
-    def set_session(self, tf_config=None):
+    def set_session(self, *, tf_config=None, init_op=True, **sess_args):
         if tf_config is None:
             tf_config = self.tf_config
 
@@ -90,11 +90,16 @@ class KerasNNClassifierMixin(object):
             tf_config = tf.ConfigProto(inter_op_parallelism_threads=n_jobs, intra_op_parallelism_threads=n_jobs, log_device_placement=log_device_placement, allow_soft_placement=True)
         #end if
 
-        tf_session = tf.Session(config=tf_config)
+        self.graph = tf.Graph()
+        tf_session = tf.Session(config=tf_config, graph=self.graph, **sess_args)
         K.set_session(tf_session)
 
-        init_op = tf.global_variables_initializer()
-        tf_session.run(init_op)
+        if init_op:
+            tf_session.run(tf.global_variables_initializer())
+
+        self.session = tf_session
+
+        return tf_session
     #end def
 
     def keras_fit(self, X, Y, *, nn_model=None, validation_data=None, resume=None, **fit_args):
@@ -111,7 +116,8 @@ class KerasNNClassifierMixin(object):
 
         logger.info('{} instances used for training and {} instances used for validation.'.format(Y.shape[0], validation_data[1].shape[0] if validation_data else int(self.validation_size * Y.shape[0])))
 
-        return nn_model.fit(X, Y, validation_data=validation_data, validation_split=0.0 if validation_data is not None else self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), initial_epoch=self.initial_epoch, **fit_args)
+        with self.graph.as_default(), self.session.as_default():
+            return nn_model.fit(X, Y, validation_data=validation_data, validation_split=0.0 if validation_data is not None else self.validation_size, epochs=self.epochs, batch_size=self.batch_size, verbose=self.verbose, callbacks=self.build_callbacks(), initial_epoch=self.initial_epoch, **fit_args)
     #end def
 
     def keras_fit_generator(self, X, Y, *, nn_model=None, generator_func=None, validation_data=None, resume=None, **fit_args):
@@ -136,13 +142,14 @@ class KerasNNClassifierMixin(object):
 
         if generator_func is None: generator_func = self._generator
 
-        return nn_model.fit_generator(
-            generator_func(X_train, Y_train, batch_size=self.batch_size),
-            validation_data=validation_data,
-            initial_epoch=self.initial_epoch,
-            steps_per_epoch=steps_per_epoch, epochs=self.epochs, verbose=self.verbose, callbacks=self.build_callbacks(),
-            **fit_args
-        )
+        with self.graph.as_default(), self.session.as_default():
+            return nn_model.fit_generator(
+                generator_func(X_train, Y_train, batch_size=self.batch_size),
+                validation_data=validation_data,
+                initial_epoch=self.initial_epoch,
+                steps_per_epoch=steps_per_epoch, epochs=self.epochs, verbose=self.verbose, callbacks=self.build_callbacks(),
+                **fit_args
+            )
     #end def
 
     def _pre_fit_setup(self, nn_model, *, resume=None, **kwargs):
@@ -159,8 +166,9 @@ class KerasNNClassifierMixin(object):
         #end if
 
         if self.initial_weights:
-            with uri_open(self.initial_weights, in_memory=False) as f:
-                nn_model.load_weights(f.temp_name)
+            with self.graph.as_default(), self.session.as_default():
+                with uri_open(self.initial_weights, in_memory=False) as f:
+                    nn_model.load_weights(f.temp_name)
             logger.info('Loaded initial weights file from <{}> will start at epoch {}.'.format(self.initial_weights, self.initial_epoch))
         #end if
 
@@ -212,7 +220,8 @@ class KerasNNClassifierMixin(object):
         batch_size = kwargs.pop('batch_size', self.batch_size)
         verbose = kwargs.pop('verbose', self.verbose)
 
-        return nn_model.predict(X.toarray() if sps.issparse(X) else X, batch_size=batch_size, verbose=verbose)
+        with self.graph.as_default(), self.session.as_default():
+            return nn_model.predict(X.toarray() if sps.issparse(X) else X, batch_size=batch_size, verbose=verbose)
     #end def
 
     def keras_predict_generator(self, X, *, nn_model=None, generator_func=None, **kwargs):
@@ -226,7 +235,8 @@ class KerasNNClassifierMixin(object):
 
         if generator_func is None: generator_func = self._generator
 
-        return nn_model.predict_generator(generator_func(X, None, batch_size=batch_size, shuffle=False), steps=steps, verbose=verbose)[:N, ...]
+        with self.graph.as_default(), self.session.as_default():
+            return nn_model.predict_generator(generator_func(X, None, batch_size=batch_size, shuffle=False), steps=steps, verbose=verbose)[:N, ...]
     #end def
 
     def build_callbacks(self):
@@ -268,7 +278,7 @@ class KerasNNClassifierMixin(object):
     #end def
 
     def load_from_tarfile(self, tar_file):
-        self.set_session()
+        self.set_session(init_op=False)
 
         fname = None
         try:
@@ -278,7 +288,11 @@ class KerasNNClassifierMixin(object):
                 fname = f.name
             #end with
 
-            self.nn_model_ = load_model(fname, custom_objects=self.custom_objects)
+            with self.graph.as_default(), self.session.as_default():
+                self.nn_model_ = load_model(fname, custom_objects=self.custom_objects)
+                self.nn_model_._make_predict_function()
+                print(self.graph, tf.get_default_graph())
+            # self.graph = tf.get_default_graph()
             logger.debug('Loaded neural network model weights {}.'.format(timer))
 
         finally:
@@ -292,7 +306,7 @@ class KerasNNClassifierMixin(object):
     def __getstate__(self):
         state = super(KerasNNClassifierMixin, self).__getstate__()
 
-        ignored_attrs = set([self.NN_MODEL_ATTRIBUTE, 'tf_session']) | self.PICKLE_IGNORED_ATTRIBUTES
+        ignored_attrs = set([self.NN_MODEL_ATTRIBUTE, 'session', 'graph']) | self.PICKLE_IGNORED_ATTRIBUTES
         for k in ignored_attrs:
             if k in state:
                 del state[k]
