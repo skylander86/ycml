@@ -106,6 +106,9 @@ class BaseFeatClass(BaseEstimator, ClassifierMixin):
     def decision_function(self, X, **kwargs):
         return self.predict_proba(X, **kwargs)
 
+    @property
+    def classes_(self): return self.classifier.classes_
+
     def __str__(self):
         return 'BaseFeatClass(featurizer_uri={}, classifier_uri={})'.format(self.featurizer_uri, self.classifier_uri)
     #end def
