@@ -44,6 +44,7 @@ def main():
 
     featurizer_type = settings.get('featurizer_type')
     featurizer_parameters = settings.getdict('featurizer_parameters', default={})
+    if featurizer_parameters is None: featurizer_parameters = {}
     featurizer_parameters['n_jobs'] = settings.getnjobs('n_jobs', default=1)
 
     labels_field = settings.get('labels_field', default='labels')

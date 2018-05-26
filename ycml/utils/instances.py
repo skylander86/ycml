@@ -105,7 +105,7 @@ def main():
 
     logging.basicConfig(format='%(asctime)-15s [%(name)s-%(process)d] %(levelname)s: %(message)s', level=logging.INFO)
 
-    list(load_instances(A.instances, labels_field=A.label_key))
+    list(load_instances(A.instances, labels_field=A.label_key, display_threshold=0))
 #end def
 
 

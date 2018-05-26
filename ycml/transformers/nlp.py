@@ -42,7 +42,7 @@ class SpacyNLPProcessor(PureTransformer):
         self.use_parser = use_parser
         self.use_entity = use_entity
 
-        self.nlp = self._setup_nlp(model_name, spacy_args, use_tagger, use_parser, use_entity)
+        self.nlp = self._setup_nlp(model_name, spacy_args=spacy_args, use_tagger=use_tagger, use_parser=use_parser, use_entity=use_entity)
     #end def
 
     def _setup_nlp(self, model_name='en', spacy_args={}, use_tagger=True, use_parser=True, use_entity=True):
