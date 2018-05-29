@@ -291,7 +291,7 @@ class KerasNNClassifierMixin(object):
             with self.graph.as_default(), self.session.as_default():
                 self.nn_model_ = load_model(fname, custom_objects=self.custom_objects)
                 self.nn_model_._make_predict_function()
-                print(self.graph, tf.get_default_graph())
+                # print(self.graph, tf.get_default_graph())
             # self.graph = tf.get_default_graph()
             logger.debug('Loaded neural network model weights {}.'.format(timer))
 
